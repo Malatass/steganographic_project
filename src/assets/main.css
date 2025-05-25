@@ -1,0 +1,192 @@
+body {
+  margin: 0;
+  font-family: 'Roboto', 'Arial', sans-serif;
+  background-color: #f9f9f9;
+  color: #333333;
+  line-height: 1.6;
+}
+
+/* Základní typografie */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+}
+
+h1,
+.app-heading {
+  color: #424242;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+h1::after,
+.app-heading::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background-color: #79be15;
+}
+
+/* Stylování odkazů */
+a {
+  color: #79be15;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #5c9110;
+}
+
+/* Navigační drobečky (breadcrumbs) */
+.v-breadcrumbs {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 10px 16px;
+  margin-bottom: 1rem;
+}
+
+.v-breadcrumbs-item {
+  font-weight: 500;
+  color: #757575;
+}
+
+.v-breadcrumbs-item--active {
+  color: #79be15;
+  font-weight: 600;
+}
+
+.v-breadcrumbs-divider {
+  color: #bdbdbd;
+}
+
+/* Komponenta karty */
+.v-card {
+  border-radius: 10px;
+  transition: box-shadow 0.3s ease;
+}
+
+.v-card:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.v-card__title {
+  color: #424242;
+  font-weight: 500;
+}
+
+/* Stylování pro seznamy ve výběrech */
+.v-list-item-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #424242;
+}
+
+.v-list-item-subtitle {
+  color: #757575;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.v-list-item--active {
+  background-color: rgba(121, 190, 21, 0.1) !important;
+}
+
+.v-list-item--active .v-list-item-title {
+  color: #79be15;
+  font-weight: 600;
+}
+
+/* Tlačítka s lepším vzhledem */
+.v-btn {
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.v-btn--elevated {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Téma pro alerty a zpětné vazby */
+.v-alert {
+  border-radius: 8px;
+}
+
+.v-alert--success {
+  background-color: #e8f5e9 !important;
+  color: #2e7d32;
+  border-color: #79be15;
+}
+
+/* Stylování přepínače tabů */
+.v-tabs {
+  margin-bottom: 1rem;
+}
+
+.v-tab--active {
+  font-weight: 600;
+}
+
+/* Sjednocené zaoblení */
+.v-btn,
+.v-alert,
+.v-card,
+.v-text-field .v-field,
+.v-textarea .v-field {
+  border-radius: 8px !important;
+}
+
+/* Vlastní komponenty */
+pre {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Roboto Mono', monospace;
+  border: 1px solid #e0e0e0;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+/* Vylepšený výběrový seznam */
+.v-select .v-field__append-inner .v-icon {
+  color: #79be15;
+}
+
+.v-field--focused {
+  border-color: #79be15 !important;
+}
+
+.v-field--error {
+  border-color: #d32f2f !important;
+}
+
+/* Scrollbar úpravy */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #79be15;
+}

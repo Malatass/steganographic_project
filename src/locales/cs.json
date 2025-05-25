@@ -1,0 +1,17 @@
+{
+  "appTitle": "Aplikace pro steganografii",
+  "home": {
+    "welcomeMessage": "Vítejte v aplikaci pro steganografii!",
+    "description": "Vyberte algoritmus, který chcete použít pro ukrývání nebo odkrývání informací."
+  },
+  "algorithms": {
+    "hideInText": "Ukrýt v textu",
+    "hideInImages": "Ukrýt v obrázcích",
+    "hideInAudio": "Ukrýt v hudbě",
+    "hideInVideo": "Ukrýt ve videu",
+    "revealHidden": "Odhalit ukryté informace"
+  },
+  "footer": {
+    "credits": "Vytvořeno jako projekt pro implementaci steganografických algoritmů."
+  }
+}
