@@ -67,10 +67,16 @@
             <div v-if="hideMode === 'text'" class="mb-4">
               <div class="d-flex justify-space-between align-center mb-1">
                 <label>Text k ukrytí:</label>
-                <v-btn size="small" variant="outlined" color="primary" @click="triggerSecretTextFileInput">
-                  <v-icon size="small" class="mr-1">mdi-upload</v-icon>
-                  Importovat ze souboru
-                </v-btn>
+                <div class="d-flex gap-2">
+                  <v-btn size="small" variant="outlined" color="primary" @click="pasteFromClipboard">
+                    <v-icon size="small" class="mr-1">mdi-clipboard-text</v-icon>
+                    Vložit ze schránky
+                  </v-btn>
+                  <v-btn size="small" variant="outlined" color="primary" @click="triggerSecretTextFileInput">
+                    <v-icon size="small" class="mr-1">mdi-upload</v-icon>
+                    Importovat ze souboru
+                  </v-btn>
+                </div>
                 <input type="file" ref="secretTextFileInput" accept=".txt" style="display: none" @change="importSecretTextFile" />
               </div>
               <v-textarea v-model="secretText" rows="3" auto-grow outlined hide-details :counter="maxTextLength" variant="outlined"></v-textarea>
@@ -152,7 +158,7 @@
         </v-card>
 
         <!-- Výsledný obrázek -->
-        <v-card v-show="stegoImageUrl" class="mb-8 pa-4" outlined>
+        <v-card v-show="stegoImageUrl" class="mb-8 pa-4 scroll-to" outlined>
           <v-card-title class="text-h5">Výsledek</v-card-title>
           <v-card-text>
             <div class="d-flex flex-column align-center">
@@ -257,7 +263,7 @@
         </v-card>
 
         <!-- Odkrytý výsledek (text nebo obrázek) -->
-        <v-card v-if="revealedData || revealedImageUrl" class="mb-8 pa-4" outlined>
+        <v-card v-if="revealedData || revealedImageUrl" class="mb-8 pa-4 scroll-to-decode" outlined>
           <v-card-title class="text-h5">Odkrytá data</v-card-title>
           <v-card-text>
             <!-- Odkrytý text -->
@@ -289,6 +295,20 @@
         </v-card>
       </v-window-item>
     </v-window>
+
+    <v-dialog v-model="showFileNameDialog" max-width="500px">
+      <v-card>
+        <v-card-title>Stáhnout soubor</v-card-title>
+        <v-card-text>
+          <v-text-field v-model="downloadFileName" label="Název souboru" outlined :suffix="downloadFileType" autofocus variant="outlined"></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="showFileNameDialog = false">Zrušit</v-btn>
+          <v-btn color="primary" @click="performDownload">Stáhnout</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script setup>
@@ -305,6 +325,12 @@
   import CryptoJS from 'crypto-js';
 
   const emit = defineEmits(['show-message']);
+
+  // Download filename
+  const showFileNameDialog = ref(false);
+  const downloadFileName = ref('');
+  const downloadFileType = ref('');
+  const downloadCallback = ref(null);
 
   // Zpracování stavu
   const isProcessing = ref(false);
@@ -687,19 +713,13 @@
 
           console.log('Encrypting with:', {
             mode: aesModeStr,
-            passwordLength: password.length
+            passwordLength: password.length,
+            password: password // Only log in development
           });
 
-          if (encryptionType.value === 'aes128') {
-            key = CryptoJS.SHA256(password).toString().substring(0, 32);
-          } else {
-            // aes256
-            key = CryptoJS.SHA256(password).toString();
-          }
-
-          console.log('Generated key hash (first 10 chars):', key.substring(0, 10) + '...');
-
-          const encrypted = CryptoJS.AES.encrypt(plainText, key);
+          // IMPORTANT: Use the raw password directly
+          // CryptoJS AES will handle proper key derivation internally
+          const encrypted = CryptoJS.AES.encrypt(plainText, password);
           textToHide = `ENCRYPTED:${aesModeStr}:${encrypted.toString()}`;
 
           console.log('Encrypted text format:', {
@@ -795,12 +815,14 @@
         message: `Data byla úspěšně ukryta v obrázku.`,
         type: 'success'
       });
+      scrollTo('.scroll-to');
     } catch (e) {
       console.error('Error in performHideInImage:', e);
       emit('show-message', {
         message: `${e.message}`,
         type: 'error'
       });
+      scrollTo('.result-alert');
     } finally {
       isProcessing.value = false;
     }
@@ -915,12 +937,10 @@
             console.log('Attempting decryption with provided password');
             try {
               const keyPassword = decryptionPassword.value;
-              const derivedKey =
-                decryptionType.value === 'aes128' ? CryptoJS.SHA256(keyPassword).toString().substring(0, 32) : CryptoJS.SHA256(keyPassword).toString();
 
-              console.log('Generated decryption key hash (first 10 chars):', derivedKey.substring(0, 10) + '...');
+              console.log('Decrypting with password:', keyPassword); // Only log in development
 
-              const decrypted = CryptoJS.AES.decrypt(actualCipherText, derivedKey);
+              const decrypted = CryptoJS.AES.decrypt(actualCipherText, keyPassword);
               const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
 
               console.log('Decryption result:', {
@@ -977,6 +997,7 @@
             message: 'Text byl úspěšně odkryt.',
             type: 'success'
           });
+          scrollTo('.scroll-to-decode');
         } catch (textError) {
           console.error('Text reveal error:', textError);
 
@@ -1010,6 +1031,7 @@
                 message: 'Obrázek byl úspěšně odkryt.',
                 type: 'success'
               });
+              scrollTo('.scroll-to-decode');
             } catch (imageError) {
               console.error('Image reveal error (after text fail in auto):', imageError);
               throw new Error(`Automatická detekce selhala. Text: ${textError.message}. Obrázek: ${imageError.message}`);
@@ -1055,9 +1077,26 @@
         message: `Chyba při odkrývání: ${e.message}`,
         type: 'error'
       });
+      scrollTo('.result-alert');
     } finally {
       isProcessing.value = false;
     }
+  }
+
+  // Function to prepare the download dialog
+  function prepareDownload(defaultName, fileType, callback) {
+    downloadFileName.value = defaultName;
+    downloadFileType.value = fileType;
+    downloadCallback.value = callback;
+    showFileNameDialog.value = true;
+  }
+
+  // Function to perform the download after the dialog is confirmed
+  function performDownload() {
+    if (typeof downloadCallback.value === 'function') {
+      downloadCallback.value(downloadFileName.value);
+    }
+    showFileNameDialog.value = false;
   }
 
   // Funkce pro stažení výsledného obrázku s ukrytými daty
@@ -1070,16 +1109,18 @@
       return;
     }
 
-    const link = document.createElement('a');
-    link.href = stegoImageUrl.value;
-    link.download = `steganografie_obrazek_${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    prepareDownload('steganografie_obrazek', '.png', (fileName) => {
+      const link = document.createElement('a');
+      link.href = stegoImageUrl.value;
+      link.download = `${fileName}${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    emit('show-message', {
-      message: 'Obrázek s ukrytými daty byl úspěšně stažen.',
-      type: 'success'
+      emit('show-message', {
+        message: 'Obrázek s ukrytými daty byl úspěšně stažen.',
+        type: 'success'
+      });
     });
   }
 
@@ -1119,17 +1160,20 @@
       return;
     }
 
-    const blob = new Blob([revealedData.value], { type: 'text/plain;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `odkryta_zprava_${Date.now()}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    prepareDownload('odkryta_zprava', '.txt', (fileName) => {
+      const blob = new Blob([revealedData.value], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${fileName}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
 
-    emit('show-message', {
-      message: 'Odkrytý text byl úspěšně stažen.',
-      type: 'success'
+      emit('show-message', {
+        message: 'Odkrytý text byl úspěšně stažen.',
+        type: 'success'
+      });
     });
   }
 
@@ -1143,16 +1187,18 @@
       return;
     }
 
-    const link = document.createElement('a');
-    link.href = revealedImageUrl.value;
-    link.download = `odkryty_obrazek_${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    prepareDownload('odkryty_obrazek', '.png', (fileName) => {
+      const link = document.createElement('a');
+      link.href = revealedImageUrl.value;
+      link.download = `${fileName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
-    emit('show-message', {
-      message: 'Odkrytý obrázek byl úspěšně stažen.',
-      type: 'success'
+      emit('show-message', {
+        message: 'Odkrytý obrázek byl úspěšně stažen.',
+        type: 'success'
+      });
     });
   }
 
@@ -1228,12 +1274,75 @@
     }
   });
 
+  async function pasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+
+      if (!text) {
+        emit('show-message', {
+          message: 'Schránka je prázdná nebo neobsahuje text',
+          type: 'warning'
+        });
+        return;
+      }
+
+      // Apply to the secret text field
+      secretText.value = text;
+      emit('show-message', {
+        message: 'Text ze schránky byl vložen',
+        type: 'success'
+      });
+    } catch (err) {
+      emit('show-message', {
+        message: `Nepodařilo se přečíst obsah schránky: ${err.message || 'Přístup ke schránce byl odepřen'}`,
+        type: 'error'
+      });
+    }
+  }
+
+  const scrollTo = (selector) => {
+    setTimeout(() => {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
+  // Add watchers for mode changes
   watch(hideMode, (newMode) => {
+    // Reset relevant fields when switching between text and image hiding modes
+    secretText.value = '';
+    secretImageFile.value = null;
+    secretImagePreview.value = '';
+    secretImageInfo.value = null;
+
     updateMaxTextLength();
+
     if (newMode === 'image') {
       encryptionType.value = 'none';
       encryptionPassword.value = '';
     }
+  });
+
+  watch(revealMode, () => {
+    // Reset revealed data when switching reveal modes
+    revealedData.value = '';
+    revealedImageUrl.value = '';
+    emit('show-message', { message: '', type: 'info' });
+  });
+
+  watch(bitsPerChannel, () => {
+    // Reset output result when changing bits per channel
+    stegoImageUrl.value = '';
+    emit('show-message', { message: '', type: 'info' });
+  });
+
+  watch(revealBitsPerChannel, () => {
+    // Reset revealed data when changing bits per channel for reveal
+    revealedData.value = '';
+    revealedImageUrl.value = '';
+    emit('show-message', { message: '', type: 'info' });
   });
 </script>
 
