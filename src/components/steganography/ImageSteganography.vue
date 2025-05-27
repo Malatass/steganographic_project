@@ -120,6 +120,21 @@
               </div>
             </div>
 
+            <div v-if="hideMode === 'text' && secretText" class="binary-representation mt-2">
+              <div class="d-flex align-center">
+                <v-icon size="small" class="mr-1">mdi-code-brackets</v-icon>
+                <span class="text-caption text-medium-emphasis">Binární reprezentace:</span>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <v-icon size="small" class="ml-2" v-bind="props">mdi-information-outline</v-icon>
+                  </template>
+                  <span>Každý znak je reprezentován 8bitovým binárním kódem ASCII/UTF-8.</span>
+                </v-tooltip>
+              </div>
+              <div class="binary-text mt-1">
+                <code>{{ secretMessageBinary }}</code>
+              </div>
+            </div>
             <!-- Šifrování heslem -->
             <div v-if="hideMode === 'text'" class="encryption-options mb-4 mt-4">
               <v-expansion-panels variant="accordion">
@@ -1093,6 +1108,13 @@
 
   // Function to perform the download after the dialog is confirmed
   function performDownload() {
+    if (!downloadFileName.value) {
+      emit('show-message', {
+        message: 'Název souboru nesmí být prázdný.',
+        type: 'error'
+      });
+      return;
+    }
     if (typeof downloadCallback.value === 'function') {
       downloadCallback.value(downloadFileName.value);
     }
@@ -1344,9 +1366,46 @@
     revealedImageUrl.value = '';
     emit('show-message', { message: '', type: 'info' });
   });
+  // Add this as a computed property
+  const secretMessageBinary = computed(() => {
+    if (hideMode.value === 'text') {
+      return textToBinary(secretText.value);
+    }
+    return '';
+  });
+
+  // Function to convert text to binary representation
+  function textToBinary(text) {
+    if (!text) return '';
+
+    return Array.from(text)
+      .map((char) => {
+        const binary = char.charCodeAt(0).toString(2).padStart(8, '0');
+        return binary;
+      })
+      .join(' '); // Space between bytes for readability
+  }
 </script>
 
 <style scoped>
+  .binary-representation {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 8px 12px;
+    border: 1px dashed #ccc;
+    margin-bottom: 1rem;
+  }
+
+  .binary-text {
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 100px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
   .image-steganography {
     margin-bottom: 2rem;
   }

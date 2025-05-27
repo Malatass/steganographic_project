@@ -71,7 +71,7 @@
             <!-- Tajná zpráva s možností importu -->
             <div class="mb-4">
               <div class="d-flex justify-space-between align-center mb-1">
-                <label>Tajná zpráva</label>
+                <label>Text k ukrytí</label>
                 <div class="d-flex gap-2">
                   <v-btn size="small" variant="outlined" color="primary" @click="pasteFromClipboard('secret')">
                     <v-icon size="small" class="mr-1">mdi-clipboard-text</v-icon>
@@ -85,6 +85,22 @@
                 <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
               </div>
               <v-textarea v-model="secretMessage" rows="2" auto-grow outlined hide-details variant="outlined"></v-textarea>
+            </div>
+
+            <div v-if="secretMessage" class="binary-representation mt-2">
+              <div class="d-flex align-center">
+                <v-icon size="small" class="mr-1">mdi-code-brackets</v-icon>
+                <span class="text-caption text-medium-emphasis">Binární reprezentace:</span>
+                <v-tooltip location="bottom">
+                  <template v-slot:activator="{ props }">
+                    <v-icon size="small" class="ml-2" v-bind="props">mdi-information-outline</v-icon>
+                  </template>
+                  <span>Každý znak je reprezentován 8bitovým binárním kódem ASCII/UTF-8.</span>
+                </v-tooltip>
+              </div>
+              <div class="binary-text mt-1">
+                <code>{{ secretMessageBinary }}</code>
+              </div>
             </div>
 
             <v-btn color="secondary" @click="performHideInText" :disabled="!originalText || !secretMessage" type="button">Ukrýt zprávu</v-btn>
@@ -110,7 +126,7 @@
               <v-expansion-panels variant="accordion">
                 <v-expansion-panel title="Šifrování heslem (volitelné)">
                   <v-expansion-panel-text>
-                    <p class="text-body-2 mb-2">Můžete zvolit šifrování výsledku pomocí hesla:</p>
+                    <p class="text-body-2 mb-2">Můžete zvolit šifrování ukrývaných dat pomocí hesla:</p>
                     <v-radio-group v-model="encryptionType" inline class="mb-2">
                       <v-radio label="Bez šifrování" value="none"></v-radio>
                       <v-radio label="AES-128" value="aes128"></v-radio>
@@ -143,7 +159,7 @@
                 <v-icon class="mr-2">mdi-content-copy</v-icon>
                 Kopírovat do schránky
               </v-btn>
-              <v-btn color="success" @click="showFileNameDialog = true">
+              <v-btn color="success" @click="downloadRevealedMessage">
                 <v-icon class="mr-2">mdi-download</v-icon>
                 Stáhnout jako TXT
               </v-btn>
@@ -234,7 +250,6 @@
           </v-card-text>
         </v-card>
 
-        <!-- NEW: Odkrytý výsledek - similar to ImageSteganography -->
         <v-card v-if="revealedMessage" class="mb-8 pa-4 scroll-to-decode" outlined>
           <v-card-title class="text-h5">Odkrytá data</v-card-title>
           <v-card-text>
@@ -274,7 +289,7 @@
 </template>
 
 <script setup>
-  import { ref, defineEmits, watch } from 'vue';
+  import { ref, defineEmits, watch, computed } from 'vue';
   import { hideInText, revealFromText, textStegoMethods } from '../../stegonography/text';
   import CryptoJS from 'crypto-js';
 
@@ -845,6 +860,22 @@
   );
 
   function performDownload() {
+    console.log('Performing download with filename:', downloadFileName.value);
+    if (!downloadFileName.value) {
+      emit('show-message', {
+        message: 'Název souboru nesmí být prázdný.',
+        type: 'error'
+      });
+      return;
+    }
+    console.log('Download callback:', downloadCallback.value);
+    if (!downloadCallback.value || typeof downloadCallback.value !== 'function') {
+      emit('show-message', {
+        message: 'Chyba při stahování: Neplatná funkce pro stažení.',
+        type: 'error'
+      });
+      return;
+    }
     if (typeof downloadCallback.value === 'function') {
       downloadCallback.value(downloadFileName.value);
     }
@@ -898,6 +929,22 @@
     }
   }
 
+  // Add this as a computed property in your component
+  const secretMessageBinary = computed(() => {
+    return textToBinary(secretMessage.value);
+  });
+
+  function textToBinary(text) {
+    if (!text) return '';
+
+    return Array.from(text)
+      .map((char) => {
+        const binary = char.charCodeAt(0).toString(2).padStart(8, '0');
+        return binary;
+      })
+      .join(' '); // Space between bytes for readability
+  }
+
   // Sledujeme změny vybrané metody pro odkrývání
   watch(
     () => selectedRevealMethod.value?.value,
@@ -948,6 +995,24 @@
 </script>
 
 <style scoped>
+  .binary-representation {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 8px 12px;
+    border: 1px dashed #ccc;
+    margin-bottom: 1rem;
+  }
+
+  .binary-text {
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 100px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
   .revealed-text {
     margin-top: 1rem;
   }
