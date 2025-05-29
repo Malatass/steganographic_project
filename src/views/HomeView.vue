@@ -6,6 +6,7 @@
       <p>Vyberte algoritmus pro ukrývání nebo odkrývání informací</p>
     </div>
     <AlgorithmSelector @select-algorithm="handleAlgorithmSelect" />
+    <v-btn to="/features" variant="tonal" color="primary" class="mt-4" prepend-icon="mdi-information-outline">Přehled funkcí aplikace</v-btn>
   </div>
 </template>
 

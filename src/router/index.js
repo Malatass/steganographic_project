@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import SteganographyView from '../views/SteganographyView.vue';
-
+import FeaturesView from '../views/Features.vue';
 const routes = [
   {
     path: '/',
@@ -12,6 +12,11 @@ const routes = [
     path: '/steganography/:algorithm',
     name: 'steganography',
     component: SteganographyView
+  },
+  {
+    path: '/features',
+    name: 'features',
+    component: FeaturesView
   }
 ];
 
