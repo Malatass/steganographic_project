@@ -1,30 +1,44 @@
 const END_OF_MESSAGE_DELIMITER_BINARY = '0000000000000000'; // 16 zeros, 2 bytes
 
 /**
- * Converts text to a binary string.
+ * Converts text to Base64, then to binary string.
+ * This adds an extra layer of encoding that makes the data more robust.
  * @param {string} text The input text.
  * @returns {string} The binary string representation.
  */
 function textToBinary(text) {
-  return Array.from(text)
+  // First convert text to Base64
+  const base64 = btoa(text);
+
+  // Then convert Base64 string to binary
+  return Array.from(base64)
     .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
     .join('');
 }
 
 /**
- * Converts a binary string to text.
+ * Converts a binary string back to text via Base64.
  * @param {string} binary The input binary string.
  * @returns {string} The decoded text.
  */
 function binaryToText(binary) {
-  let text = '';
+  let base64 = '';
+
+  // Convert binary to Base64 string
   for (let i = 0; i < binary.length; i += 8) {
     const byte = binary.substring(i, i + 8);
     if (byte.length === 8) {
-      text += String.fromCharCode(parseInt(byte, 2));
+      base64 += String.fromCharCode(parseInt(byte, 2));
     }
   }
-  return text;
+
+  try {
+    // Decode the Base64 back to text
+    return atob(base64);
+  } catch (e) {
+    console.error('Error decoding Base64:', e);
+    return base64; // Return the Base64 if decoding fails
+  }
 }
 
 /**
@@ -34,7 +48,7 @@ function binaryToText(binary) {
  * @returns {AudioBuffer} A new AudioBuffer with the hidden message, or null if message is too long.
  */
 export function hideInAudio(originalAudioBuffer, message) {
-  const audioContext = new (window.AudioContext || window.AudioContext)();
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const messageBinary = textToBinary(message) + END_OF_MESSAGE_DELIMITER_BINARY;
 
   const channelData = originalAudioBuffer.getChannelData(0); // Use the first channel
@@ -55,18 +69,28 @@ export function hideInAudio(originalAudioBuffer, message) {
 
   const newChannelData = stegoAudioBuffer.getChannelData(0); // Modify the first channel
 
+  // Skip the first 200 samples to avoid header modifications that might be more noticeable
+  const startOffset = 200;
+
   for (let i = 0; i < messageBinary.length; i++) {
     const bit = parseInt(messageBinary[i], 10);
-    const floatSample = newChannelData[i];
 
-    // Quantize to 16-bit range, modify LSB, then de-quantize
-    let intSample = Math.round(floatSample * 32767);
+    // Add offset to avoid header area
+    const sampleIndex = i + startOffset;
 
-    // Clear LSB and set the new bit
-    intSample = (intSample & 0xfffe) | bit;
+    if (sampleIndex < numSamples) {
+      const floatSample = newChannelData[sampleIndex];
 
-    newChannelData[i] = Math.max(-1.0, Math.min(1.0, intSample / 32767));
+      // Quantize to 16-bit range, modify LSB, then de-quantize
+      let intSample = Math.round(floatSample * 32767);
+
+      // Clear LSB and set the new bit
+      intSample = (intSample & 0xfffe) | bit;
+
+      newChannelData[sampleIndex] = Math.max(-1.0, Math.min(1.0, intSample / 32767));
+    }
   }
+
   return stegoAudioBuffer;
 }
 
@@ -81,7 +105,10 @@ export function revealFromAudio(stegoAudioBuffer) {
   let revealedBits = '';
   let bitBuffer = '';
 
-  for (let i = 0; i < numSamples; i++) {
+  // Skip the first 200 samples to match the hide function
+  const startOffset = 200;
+
+  for (let i = startOffset; i < numSamples; i++) {
     const floatSample = channelData[i];
     const intSample = Math.round(floatSample * 32767);
     const lsb = intSample & 1;
@@ -95,9 +122,11 @@ export function revealFromAudio(stegoAudioBuffer) {
 
     if (bitBuffer === END_OF_MESSAGE_DELIMITER_BINARY) {
       // Remove delimiter from revealedBits
-      return binaryToText(revealedBits.substring(0, revealedBits.length - END_OF_MESSAGE_DELIMITER_BINARY.length));
+      const messageWithoutDelimiter = revealedBits.substring(0, revealedBits.length - END_OF_MESSAGE_DELIMITER_BINARY.length);
+      return binaryToText(messageWithoutDelimiter);
     }
   }
+
   console.warn('End of message delimiter not found.');
   return null; // Delimiter not found
 }

@@ -31,6 +31,9 @@
               <p>Maximální kapacita pro zprávu: {{ formatCapacity(carrierAudioInfo.capacity) }}</p>
             </div>
 
+            <v-alert v-if="carrierAudioFile && carrierAudioFile.type === 'audio/mpeg'" type="warning" variant="tonal" class="mb-4">
+              MP3 je ztrátový formát a může způsobit ztrátu ukrytých dat. Pro lepší výsledky doporučujeme použít formát WAV.
+            </v-alert>
             <v-textarea
               v-model="secretMessage"
               label="Tajná zpráva k ukrytí"
