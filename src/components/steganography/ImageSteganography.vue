@@ -1,15 +1,15 @@
 <template>
   <div class="image-steganography">
     <v-tabs v-model="activeTab" class="mb-6" color="primary" @update:model-value="resetOutputs">
-      <v-tab value="hide">Ukrýt informace</v-tab>
-      <v-tab value="reveal">Odkrýt informace</v-tab>
+      <v-tab value="hide">Ukrýt zprávu</v-tab>
+      <v-tab value="reveal">Odkrýt zprávu</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
       <!-- Záložka pro ukrývání informací -->
       <v-window-item value="hide">
         <v-card class="mb-8 pa-4" outlined>
-          <v-card-title class="text-h5">Ukrýt informace v obrázku</v-card-title>
+          <v-card-title class="text-h5">Ukrýt zprávu v obrázku</v-card-title>
           <v-card-text>
             <!-- Výběr typu dat k ukrytí -->
             <v-radio-group v-model="hideMode" inline class="mb-4">
@@ -66,7 +66,7 @@
             <!-- Data pro ukrytí - text nebo obrázek -->
             <div v-if="hideMode === 'text'" class="mb-4">
               <div class="d-flex justify-space-between align-center mb-1">
-                <label>Text k ukrytí:</label>
+                <label>Text k ukrytí</label>
                 <div class="d-flex gap-2">
                   <v-btn size="small" variant="outlined" color="primary" @click="pasteFromClipboard">
                     <v-icon size="small" class="mr-1">mdi-clipboard-text</v-icon>
@@ -168,7 +168,7 @@
               </v-expansion-panels>
             </div>
 
-            <v-btn color="secondary" @click="performHideInImage" :disabled="isProcessing || !canPerformHide" :loading="isProcessing">Ukrýt informace</v-btn>
+            <v-btn color="secondary" @click="performHideInImage" :disabled="isProcessing || !canPerformHide" :loading="isProcessing">Ukrýt zprávu</v-btn>
           </v-card-text>
         </v-card>
 

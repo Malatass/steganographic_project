@@ -9,7 +9,9 @@
       <!-- Hide Tab -->
       <v-window-item value="hide">
         <v-card class="mb-8 pa-4" outlined>
-          <v-card-title class="text-h5">Ukrýt zprávu do videa</v-card-title>
+          <v-card-title class="text-h5">Ukrýt zprávu do snímku videa</v-card-title>
+          <v-card-subtitle>Tato funkce umožňuje ukrýt zprávu do jednoho snímku videa. Pro odkrytí bude nutné znát číslo snímku.</v-card-subtitle>
+
           <v-card-text>
             <v-file-input
               v-model="videoFile"
@@ -54,6 +56,11 @@
               counter
             ></v-textarea>
 
+            <v-alert type="info" variant="tonal" class="mb-4" icon="mdi-information-outline">
+              <p>Systém umožňuje ukládat zprávy pouze do jednotlivých snímků videa, ne do celého videa najednou.</p>
+              <p class="mb-0">Po ukrytí zprávy budete moci stáhnout upravený snímek jako obrázek.</p>
+            </v-alert>
+
             <v-btn color="secondary" @click="hideMessageInVideo" :disabled="!videoFile || !secretMessage || isProcessing" :loading="isProcessing">
               Ukrýt zprávu
             </v-btn>
@@ -61,7 +68,10 @@
             <div v-if="modifiedFrameUrl" class="mt-6">
               <h4 class="mb-2">Snímek s ukrytou zprávou:</h4>
               <img :src="modifiedFrameUrl" class="border frame-preview" alt="Snímek s ukrytou zprávou" />
-              <p class="mt-2 text-body-2">Zpráva byla ukryta ve snímku {{ currentFrameIndex }}. Pro extrakci zprávy z videa bude potřeba znát toto číslo.</p>
+              <p class="mt-2 text-body-2">
+                <strong>Zpráva byla ukryta ve snímku {{ currentFrameIndex }}.</strong>
+                Pro pozdější extrakci zprávy si snímek stáhněte a zapamatujte si číslo snímku.
+              </p>
               <div class="mt-4">
                 <v-btn color="primary" @click="prepareFrameForReveal">
                   <v-icon class="mr-2">mdi-magnify</v-icon>
@@ -80,21 +90,31 @@
       <!-- Reveal Tab -->
       <v-window-item value="reveal">
         <v-card class="mb-8 pa-4" outlined>
-          <v-card-title class="text-h5">Odkrýt zprávu z videa nebo snímku</v-card-title>
+          <v-card-title class="text-h5">Odkrýt zprávu ze snímku</v-card-title>
           <v-card-text>
             <!-- Source selection tabs -->
             <div v-if="!useInMemoryFrame">
-              <v-tabs v-model="revealSource" class="mb-4">
-                <v-tab value="video">Z videa</v-tab>
-                <v-tab value="image">Z obrázku</v-tab>
-              </v-tabs>
-
               <v-window v-model="revealSource">
+                <!-- Reveal from image -->
+                <v-window-item value="image">
+                  <v-file-input
+                    v-model="stegoImageFile"
+                    label="Vyberte uložený snímek s ukrytou zprávou (PNG)"
+                    accept="image/png,image/jpeg"
+                    prepend-icon="mdi-image"
+                    outlined
+                    variant="outlined"
+                    class="mb-4"
+                    @update:model-value="onStegoImageSelected"
+                    :disabled="isProcessing"
+                  ></v-file-input>
+                </v-window-item>
+
                 <!-- Reveal from video -->
                 <v-window-item value="video">
                   <v-file-input
                     v-model="stegoVideoFile"
-                    label="Vyberte video s ukrytou zprávou (MP4)"
+                    label="Vyberte originální video s ukrytou zprávou (MP4)"
                     accept="video/mp4"
                     prepend-icon="mdi-video"
                     outlined
@@ -114,21 +134,14 @@
                       variant="outlined"
                     ></v-text-field>
                   </div>
-                </v-window-item>
 
-                <!-- Reveal from image -->
-                <v-window-item value="image">
-                  <v-file-input
-                    v-model="stegoImageFile"
-                    label="Vyberte obrázek s ukrytou zprávou (PNG, JPG)"
-                    accept="image/png,image/jpeg"
-                    prepend-icon="mdi-image"
-                    outlined
-                    variant="outlined"
-                    class="mb-4"
-                    @update:model-value="onStegoImageSelected"
-                    :disabled="isProcessing"
-                  ></v-file-input>
+                  <v-alert type="warning" variant="tonal" class="mb-4" icon="mdi-alert-outline">
+                    <p>
+                      <strong>Upozornění:</strong>
+                      Odkrývání z původního videa může být nespolehlivé, protože formát MP4 používá kompresi, která může poškodit ukrytá data.
+                    </p>
+                    <p class="mb-0">Pro spolehlivější výsledky použijte uložený snímek z předchozího kroku.</p>
+                  </v-alert>
                 </v-window-item>
               </v-window>
             </div>
@@ -182,7 +195,7 @@
   const activeTab = ref('hide');
   const isProcessing = ref(false);
   const useInMemoryFrame = ref(false);
-  const revealSource = ref('video'); // 'video' or 'image'
+  const revealSource = ref('image'); // 'video' or 'image'
 
   // Video hide section
   const videoFile = ref(null);

@@ -155,11 +155,11 @@
             </div>
 
             <div class="d-flex gap-2">
-              <v-btn color="success" @click="copyToClipboard">
+              <v-btn color="success" @click="copyToClipboard" :disabled="selectedMethod.value === 'whitespace'">
                 <v-icon class="mr-2">mdi-content-copy</v-icon>
                 Kopírovat do schránky
               </v-btn>
-              <v-btn color="success" @click="downloadRevealedMessage">
+              <v-btn color="success" @click="downloadTextFile">
                 <v-icon class="mr-2">mdi-download</v-icon>
                 Stáhnout jako TXT
               </v-btn>
@@ -215,7 +215,13 @@
               <div class="d-flex justify-space-between align-center mb-1">
                 <label>Text s ukrytou zprávou</label>
                 <div class="d-flex gap-2">
-                  <v-btn size="small" variant="outlined" color="primary" @click="pasteFromClipboard('stego')">
+                  <v-btn
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    @click="pasteFromClipboard('stego')"
+                    :disabled="selectedRevealMethod.value === 'whitespace'"
+                  >
                     <v-icon size="small" class="mr-1">mdi-clipboard-text</v-icon>
                     Vložit ze schránky
                   </v-btn>
@@ -256,7 +262,7 @@
             <div class="revealed-text">
               <v-textarea v-model="revealedMessage" label="Odkrytý text" rows="5" auto-grow outlined readonly class="mb-4" variant="outlined"></v-textarea>
 
-              <v-btn color="success" @click="copyRevealedMessage">
+              <v-btn color="success" @click="copyRevealedMessage" :disabled="selectedMethod.value === 'whitespace'">
                 <v-icon class="mr-2">mdi-content-copy</v-icon>
                 Kopírovat do schránky
               </v-btn>
@@ -580,7 +586,7 @@
       });
       return;
     }
-
+    resultText.value = '';
     try {
       const options = {};
 
@@ -789,57 +795,39 @@
       });
   }
 
-  // Funkce pro stažení výsledku jako TXT souboru
   function downloadTextFile() {
-    const fileName = (downloadFileName.value || 'steganografie_text') + '.txt';
-
-    // Pokud je vybrané šifrování, šifrujeme text před stažením
-    let textToDownload = resultText.value;
-
-    if (encryptionType.value !== 'none') {
-      if (!encryptionPassword.value) {
-        emit('show-message', {
-          message: 'Pro šifrování musíte zadat heslo.',
-          type: 'error'
-        });
-        return;
-      }
-
-      try {
-        textToDownload = encryptText(textToDownload, encryptionPassword.value, encryptionType.value);
-      } catch (e) {
-        emit('show-message', {
-          message: `Chyba při šifrování: ${e.message}`,
-          type: 'error'
-        });
-        return;
-      }
+    if (!resultText.value) {
+      emit('show-message', {
+        message: 'Není k dispozici žádný text ke stažení.',
+        type: 'error'
+      });
+      return;
     }
 
-    const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+    prepareDownload('steganografie_text', '.txt', (fileName) => {
+      const textToDownload =
+        encryptionType.value !== 'none' && encryptionPassword.value
+          ? encryptText(resultText.value, encryptionPassword.value, encryptionType.value)
+          : resultText.value;
 
-    // Vytvoříme odkaz pro stažení
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = fileName;
+      const blob = new Blob([textToDownload], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${fileName}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
 
-    // Přidáme odkaz do DOM, klikneme na něj a pak ho odstraníme
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    // Zavřeme dialog
-    showFileNameDialog.value = false;
-
-    emit('show-message', {
-      message:
-        encryptionType.value !== 'none'
-          ? `Soubor ${fileName} byl zašifrován pomocí ${encryptionType.value.toUpperCase()} a úspěšně stažen.`
-          : `Soubor ${fileName} byl úspěšně stažen.`,
-      type: 'success'
+      emit('show-message', {
+        message:
+          encryptionType.value !== 'none'
+            ? `Soubor ${fileName}.txt byl zašifrován pomocí ${encryptionType.value.toUpperCase()} a úspěšně stažen.`
+            : `Soubor ${fileName}.txt byl úspěšně stažen.`,
+        type: 'success'
+      });
     });
   }
-
   // Hlídáme změny v stegoTextInput
   watch(stegoTextInput, (newValue) => {
     if (newValue) {
@@ -860,7 +848,6 @@
   );
 
   function performDownload() {
-    console.log('Performing download with filename:', downloadFileName.value);
     if (!downloadFileName.value) {
       emit('show-message', {
         message: 'Název souboru nesmí být prázdný.',
@@ -868,7 +855,7 @@
       });
       return;
     }
-    console.log('Download callback:', downloadCallback.value);
+
     if (!downloadCallback.value || typeof downloadCallback.value !== 'function') {
       emit('show-message', {
         message: 'Chyba při stahování: Neplatná funkce pro stažení.',
