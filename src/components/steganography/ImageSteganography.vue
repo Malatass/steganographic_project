@@ -81,7 +81,6 @@
               </div>
               <v-textarea v-model="secretText" rows="3" auto-grow outlined hide-details :counter="maxTextLength" variant="outlined"></v-textarea>
             </div>
-
             <div v-else class="mb-4">
               <label>Obrázek k ukrytí:</label>
               <v-file-input
@@ -119,7 +118,10 @@
                 </div>
               </div>
             </div>
-
+            <v-alert v-if="hideMode === 'text' && hasNonLatinChars(secretText)" type="info" variant="tonal" density="comfortable" class="mt-2">
+              <strong>Poznámka:</strong>
+              Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+            </v-alert>
             <div v-if="hideMode === 'text' && secretText" class="binary-representation mt-2">
               <div class="d-flex align-center">
                 <v-icon size="small" class="mr-1">mdi-code-brackets</v-icon>
@@ -1384,6 +1386,11 @@
         return binary;
       })
       .join(' '); // Space between bytes for readability
+  }
+
+  function hasNonLatinChars(text) {
+    if (!text) return false;
+    return /[^\x00-\x7F]/.test(text); // Tests for non-ASCII characters
   }
 </script>
 

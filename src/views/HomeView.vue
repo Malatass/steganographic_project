@@ -17,7 +17,6 @@
   const router = useRouter();
 
   const handleAlgorithmSelect = (algorithm) => {
-    console.log(`Vybrán algoritmus: ${algorithm}`);
     router.push({ name: 'steganography', params: { algorithm } });
   };
 </script>

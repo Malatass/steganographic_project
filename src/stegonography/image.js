@@ -487,28 +487,65 @@ function arrayToBinary(array) {
  */
 function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
   const secretCtx = secretCanvas.getContext('2d');
+  if (!secretCtx) {
+    console.error('Could not get 2D context for secret canvas');
+    return secretCanvas.getContext('2d').getImageData(0, 0, secretCanvas.width, secretCanvas.height).data;
+  }
+
+  // Get the original image data
   const secretImageData = secretCtx.getImageData(0, 0, secretCanvas.width, secretCanvas.height);
 
-  // Kontrola, zda se tajný obrázek vejde do nosného
-  const baseCapacity = Math.floor((baseCanvas.width * baseCanvas.height * 3 * bitsPerChannel) / 8);
-  const secretSize = secretCanvas.width * secretCanvas.height * 3;
+  // Calculate header size (IMG:width:height:)
+  const headerSize = `IMG:${secretCanvas.width}:${secretCanvas.height}:`.length * 8;
 
+  // Calculate capacity in bits (3 channels * bits per pixel * total pixels - header size)
+  const baseCapacity = Math.floor(baseCanvas.width * baseCanvas.height * 3 * bitsPerChannel) - headerSize;
+
+  // Calculate secret image size in bits (4 bytes per pixel * 8 bits per byte * total pixels)
+  // We're only using RGB channels, so it's actually 3 bytes per pixel
+  const secretSize = secretCanvas.width * secretCanvas.height * 3 * 8;
+
+  console.log('Image capacity check:', {
+    baseImageSize: `${baseCanvas.width}x${baseCanvas.height}`,
+    secretImageSize: `${secretCanvas.width}x${secretCanvas.height}`,
+    baseCapacity: `${Math.floor(baseCapacity / 8)} bytes`,
+    secretSize: `${Math.floor(secretSize / 8)} bytes`,
+    willFit: secretSize <= baseCapacity,
+    bitsPerChannel
+  });
+
+  console.log(secretSize);
+  console.log(baseCapacity);
+
+  // If the secret image is too large, resize it
   if (secretSize > baseCapacity) {
-    // Tajný obrázek je příliš velký, musíme ho zmenšit
-    const resizeFactor = Math.sqrt(baseCapacity / secretSize / 1.2); // Ponecháme rezervu 20%
+    // Calculate resize factor (with safety margin)
+    const resizeFactor = Math.sqrt((baseCapacity / secretSize) * 0.5); // 20% safety margin
 
-    // Vytvoření nového plátna se zmenšenou velikostí
+    // Calculate new dimensions ensuring they're at least 1x1
+    const newWidth = Math.max(1, Math.floor(secretCanvas.width * resizeFactor));
+    const newHeight = Math.max(1, Math.floor(secretCanvas.height * resizeFactor));
+
+    console.log(`Resizing image from ${secretCanvas.width}x${secretCanvas.height} to ${newWidth}x${newHeight} (factor: ${resizeFactor.toFixed(2)})`);
+
+    // Create a temporary canvas for resizing
     const resizedCanvas = document.createElement('canvas');
-    const newWidth = Math.floor(secretCanvas.width * resizeFactor);
-    const newHeight = Math.floor(secretCanvas.height * resizeFactor);
-
     resizedCanvas.width = newWidth;
     resizedCanvas.height = newHeight;
 
+    // Draw the original image at the new size
     const resizedCtx = resizedCanvas.getContext('2d');
+    if (!resizedCtx) {
+      console.error('Could not get context for resize canvas');
+      return secretImageData.data;
+    }
+
+    // Enable high quality resizing
+    resizedCtx.imageSmoothingEnabled = true;
+    resizedCtx.imageSmoothingQuality = 'high';
     resizedCtx.drawImage(secretCanvas, 0, 0, secretCanvas.width, secretCanvas.height, 0, 0, newWidth, newHeight);
 
-    // Aktualizace kanvasu tajného obrázku
+    // Update the original secret canvas for the UI
     secretCanvas.width = newWidth;
     secretCanvas.height = newHeight;
     secretCtx.drawImage(resizedCanvas, 0, 0);
@@ -516,6 +553,7 @@ function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
     return secretCtx.getImageData(0, 0, newWidth, newHeight).data;
   }
 
+  // If no resize needed, return the original image data
   return secretImageData.data;
 }
 
