@@ -1,4 +1,6 @@
 const END_OF_MESSAGE_DELIMITER_BINARY = '0000000000000000'; // 16 zeros, 2 bytes
+const MAGIC_HEADER = 'STEGANOAUDIO1';
+const MAGIC_HEADER_BASE64 = btoa(MAGIC_HEADER);
 
 /**
  * Converts text to Base64, then to binary string.
@@ -49,13 +51,15 @@ function binaryToText(binary) {
  */
 export function hideInAudio(originalAudioBuffer, message) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const messageBinary = textToBinary(message) + END_OF_MESSAGE_DELIMITER_BINARY;
+  const messageWithHeader = MAGIC_HEADER + message;
+  console.log('[AUDIO ENCODE] Encoding message with magic header:', MAGIC_HEADER, '| Message:', message);
+  const messageBinary = textToBinary(messageWithHeader) + END_OF_MESSAGE_DELIMITER_BINARY;
 
   const channelData = originalAudioBuffer.getChannelData(0); // Use the first channel
   const numSamples = channelData.length;
 
   if (messageBinary.length > numSamples) {
-    console.error('Message is too long to hide in this audio.');
+    console.error('[AUDIO ENCODE] Message is too long to hide in this audio. Length:', messageBinary.length, 'Samples available:', numSamples);
     return null;
   }
 
@@ -90,6 +94,7 @@ export function hideInAudio(originalAudioBuffer, message) {
       newChannelData[sampleIndex] = Math.max(-1.0, Math.min(1.0, intSample / 32767));
     }
   }
+  console.log('[AUDIO ENCODE] Message successfully encoded. Total bits:', messageBinary.length, 'Header:', MAGIC_HEADER, 'Header (Base64):', MAGIC_HEADER_BASE64);
 
   return stegoAudioBuffer;
 }
@@ -97,7 +102,7 @@ export function hideInAudio(originalAudioBuffer, message) {
 /**
  * Reveals a hidden message from an AudioBuffer using LSB steganography.
  * @param {AudioBuffer} stegoAudioBuffer The AudioBuffer containing the hidden message.
- * @returns {string} The revealed message, or null if no message is found.
+ * @returns {string} The revealed message, or null if no message is found or header is missing.
  */
 export function revealFromAudio(stegoAudioBuffer) {
   const channelData = stegoAudioBuffer.getChannelData(0); // Use the first channel
@@ -123,10 +128,21 @@ export function revealFromAudio(stegoAudioBuffer) {
     if (bitBuffer === END_OF_MESSAGE_DELIMITER_BINARY) {
       // Remove delimiter from revealedBits
       const messageWithoutDelimiter = revealedBits.substring(0, revealedBits.length - END_OF_MESSAGE_DELIMITER_BINARY.length);
-      return binaryToText(messageWithoutDelimiter);
+      const decoded = binaryToText(messageWithoutDelimiter);
+      if (!decoded) {
+        console.warn('[AUDIO DECODE] Decoded message is empty. Possibly lost due to file format or corruption.');
+        return null;
+      }
+      if (!decoded.startsWith(MAGIC_HEADER)) {
+        console.warn('[AUDIO DECODE] Magic header not found. This audio likely does not contain a valid hidden message. Decoded:', decoded);
+        return null;
+      }
+      const revealed = decoded.substring(MAGIC_HEADER.length);
+      console.log('[AUDIO DECODE] Magic header found. Revealed message:', revealed);
+      return revealed;
     }
   }
 
-  console.warn('End of message delimiter not found.');
+  console.warn('[AUDIO DECODE] End of message delimiter not found. No message extracted.');
   return null; // Delimiter not found
 }

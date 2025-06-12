@@ -171,6 +171,7 @@
             </div>
 
             <v-btn color="secondary" @click="performHideInImage" :disabled="isProcessing || !canPerformHide" :loading="isProcessing">Ukrýt zprávu</v-btn>
+            
           </v-card-text>
         </v-card>
 

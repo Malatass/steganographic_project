@@ -44,17 +44,32 @@
               ></v-text-field>
             </div>
 
-            <v-textarea
-              v-model="secretMessage"
-              label="Tajná zpráva k ukrytí"
-              rows="3"
-              auto-grow
-              outlined
-              variant="outlined"
-              class="mb-4"
-              :disabled="!videoFile || isProcessing"
-              counter
-            ></v-textarea>
+            <div class="mb-4">
+              <div class="d-flex justify-space-between align-center mb-1">
+                <label>Text k ukrytí</label>
+                <div class="d-flex gap-2">
+                  <v-btn size="small" variant="outlined" color="primary" @click="pasteSecretFromClipboard">
+                    <v-icon size="small" class="mr-1">mdi-clipboard-text</v-icon>
+                    Vložit ze schránky
+                  </v-btn>
+                  <v-btn size="small" variant="outlined" color="primary" @click="triggerSecretMessageFileInput">
+                    <v-icon size="small" class="mr-1">mdi-upload</v-icon>
+                    Importovat ze souboru
+                  </v-btn>
+                </div>
+                <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
+              </div>
+              <v-textarea
+                v-model="secretMessage"
+                rows="3"
+                auto-grow
+                outlined
+                variant="outlined"
+                class="mb-4"
+                :disabled="!videoFile || isProcessing"
+                counter
+              ></v-textarea>
+            </div>
 
             <v-alert type="info" variant="tonal" class="mb-4" icon="mdi-information-outline">
               <p>Systém umožňuje ukládat zprávy pouze do jednotlivých snímků videa, ne do celého videa najednou.</p>
@@ -72,16 +87,31 @@
                 <strong>Zpráva byla ukryta ve snímku {{ currentFrameIndex }}.</strong>
                 Pro pozdější extrakci zprávy si snímek stáhněte a zapamatujte si číslo snímku.
               </p>
-              <div class="mt-4">
-                <v-btn color="primary" @click="prepareFrameForReveal">
-                  <v-icon class="mr-2">mdi-magnify</v-icon>
-                  Odkrýt zprávu z tohoto snímku
-                </v-btn>
-                <v-btn class="ml-2" color="secondary" @click="downloadModifiedFrame">
-                  <v-icon class="mr-2">mdi-download</v-icon>
-                  Stáhnout snímek
-                </v-btn>
+       
+              <div class="d-flex gap-2 mt-2">
+              <v-btn color="secondary" @click="prepareFrameForReveal">
+                <v-icon class="mr-2">mdi-magnify</v-icon>
+                Odkrýt zprávu z tohoto audia
+              </v-btn>
+
+              <v-btn color="success" class="ml-2" @click="openDownloadDialog">
+                <v-icon class="mr-2">mdi-download</v-icon>
+                Stáhnout audio
+              </v-btn>
               </div>
+              <v-dialog v-model="downloadDialog" max-width="400">
+                <v-card>
+                  <v-card-title>Stáhnout soubor</v-card-title>
+                  <v-card-text>
+                    <v-text-field v-model="downloadFileName" label="Název souboru" outlined :suffix="downloadFileSuffix" autofocus variant="outlined"></v-text-field>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" text @click="downloadDialog = false">Zrušit</v-btn>
+                    <v-btn color="primary" @click="downloadModifiedFrame">Stáhnout</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
             </div>
           </v-card-text>
         </v-card>
@@ -97,14 +127,15 @@
               <v-window v-model="revealSource">
                 <!-- Reveal from image -->
                 <v-window-item value="image">
+                  <label>Vyberte obrázek s ukrytými daty:</label>
                   <v-file-input
                     v-model="stegoImageFile"
-                    label="Vyberte uložený snímek s ukrytou zprávou (PNG)"
-                    accept="image/png,image/jpeg"
-                    prepend-icon="mdi-image"
+                    accept="image/*"
+                    prepend-icon="mdi-image-search"
+                    label="Vyberte obrázek"
                     outlined
+                    class="mt-1"
                     variant="outlined"
-                    class="mb-4"
                     @update:model-value="onStegoImageSelected"
                     :disabled="isProcessing"
                   ></v-file-input>
@@ -216,6 +247,12 @@
   const videoElement = document.createElement('video');
   const stegoVideoElement = document.createElement('video');
   const stegoImageElement = document.createElement('img');
+
+  const downloadDialog = ref(false);
+  const downloadFileName = ref('stego_frame');
+  const downloadFileSuffix = ref('.png');
+
+  const secretMessageFileInput = ref(null);
 
   function resetOutputs() {
     if (activeTab.value === 'hide') {
@@ -370,15 +407,21 @@
     }
   }
 
+  function openDownloadDialog() {
+    downloadFileName.value = `stego_frame_${currentFrameIndex.value}`;
+    downloadDialog.value = true;
+  }
+
   function downloadModifiedFrame() {
     if (!modifiedFrameUrl.value) return;
-
     const link = document.createElement('a');
     link.href = modifiedFrameUrl.value;
-    link.download = `stego_frame_${currentFrameIndex.value}.png`;
+    link.download = `${downloadFileName.value || 'stego_frame'}${downloadFileSuffix.value}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    downloadDialog.value = false;
+    emit('show-message', { message: 'Snímek byl úspěšně stažen.', type: 'success' });
   }
 
   function copyRevealedMessage() {
@@ -398,6 +441,39 @@
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  function triggerSecretMessageFileInput() {
+    secretMessageFileInput.value.click();
+  }
+
+  async function pasteSecretFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) {
+        emit('show-message', { message: 'Schránka je prázdná nebo neobsahuje text', type: 'warning' });
+        return;
+      }
+      secretMessage.value = text;
+      emit('show-message', { message: 'Text ze schránky byl vložen', type: 'success' });
+    } catch (err) {
+      emit('show-message', { message: `Nepodařilo se přečíst obsah schránky: ${err.message || 'Přístup ke schránce byl odepřen'}`, type: 'error' });
+    }
+  }
+
+  function importSecretMessageFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      secretMessage.value = e.target.result;
+      emit('show-message', { message: `Soubor "${file.name}" byl úspěšně importován jako text k ukrytí.`, type: 'success' });
+    };
+    reader.onerror = (e) => {
+      emit('show-message', { message: `Chyba při čtení souboru: ${e.target.error}`, type: 'error' });
+    };
+    reader.readAsText(file);
+    event.target.value = '';
   }
 </script>
 
