@@ -520,7 +520,7 @@ function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
   // If the secret image is too large, resize it
   if (secretSize > baseCapacity) {
     // Calculate resize factor (with safety margin)
-    const resizeFactor = Math.sqrt((baseCapacity / secretSize) * 0.5); // 20% safety margin
+    const resizeFactor = Math.sqrt((baseCapacity / secretSize) * 0.5);
 
     // Calculate new dimensions ensuring they're at least 1x1
     const newWidth = Math.max(1, Math.floor(secretCanvas.width * resizeFactor));

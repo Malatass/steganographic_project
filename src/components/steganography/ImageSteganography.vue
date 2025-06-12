@@ -846,13 +846,6 @@
   }
 
   async function performRevealFromImage() {
-    console.log('Starting performRevealFromImage', {
-      revealMode: revealMode.value,
-      revealBitsPerChannel: revealBitsPerChannel.value,
-      isEncryptedContent: isEncryptedContent.value,
-      decryptionType: decryptionType.value
-    });
-
     if (!stegoFile.value) {
       emit('show-message', {
         message: 'Prosím, vyberte obrázek s ukrytými daty.',
@@ -871,20 +864,16 @@
 
     try {
       // Create canvas with full resolution
-      console.log('Loading stegoFile into Image object');
       const img = new Image();
       const loadImagePromise = new Promise((resolve, reject) => {
         img.onload = resolve;
-        img.onerror = (err) => {
-          console.error('Image load error:', err);
+        img.onerror = () => {
           reject(new Error('Nepodařilo se načíst obrázek pro odkrývání.'));
         };
-        // Create a URL from the File object for the image source
         img.src = URL.createObjectURL(stegoFile.value);
       });
 
       await loadImagePromise;
-      console.log('Image loaded successfully, dimensions:', { width: img.width, height: img.height });
 
       const fullCanvas = document.createElement('canvas');
       fullCanvas.width = img.width;
@@ -896,207 +885,179 @@
       fullCtx.drawImage(img, 0, 0);
       URL.revokeObjectURL(img.src); // Clean up the object URL
 
-      console.log('Image drawn to full-resolution canvas');
-
-      // Based on selected mode, reveal text or image
-      if (revealMode.value === 'text' || revealMode.value === 'auto') {
+      // For auto mode, we'll try both methods
+      if (revealMode.value === 'auto') {
+        // First try text reveal to check header
         try {
-          console.log(`Attempting to reveal as ${revealMode.value === 'auto' ? 'text (auto mode)' : 'text'}`);
-          let revealedTextContent = await revealTextFromImage(fullCanvas, revealBitsPerChannel.value);
+          const initialTextPeek = await peekInitialTextFromImage(fullCanvas, revealBitsPerChannel.value);
 
-          console.log('Raw revealed content (first 100 chars):', revealedTextContent.substring(0, 100) + '...');
-          console.log('Content analysis:', {
-            startsWithEncrypted: revealedTextContent.startsWith('ENCRYPTED:'),
-            startsWithText: revealedTextContent.startsWith('TEXT:'),
-            length: revealedTextContent.length
-          });
-
-          if (revealedTextContent.startsWith('ENCRYPTED:')) {
-            console.log('Detected encrypted content');
-            const headerMatch = revealedTextContent.match(/^ENCRYPTED:(AES-128|AES-256):(.*)$/s);
-
-            if (!headerMatch) {
-              console.error('Invalid encrypted header format:', revealedTextContent.substring(0, 50) + '...');
-              throw new Error('Chybný formát šifrované hlavičky.');
-            }
-
-            const detectedHeaderEncType = headerMatch[1]; // "AES-128" or "AES-256"
-            const actualCipherText = headerMatch[2];
-            const actualDecryptionTypeFromHeader = detectedHeaderEncType === 'AES-128' ? 'aes128' : 'aes256';
-
-            console.log('Encryption details:', {
-              detectedHeaderEncType,
-              cipherTextLength: actualCipherText.length,
-              actualDecryptionTypeFromHeader,
-              currentDecryptionType: decryptionType.value,
-              isEncryptedContentFlag: isEncryptedContent.value
-            });
-
-            // Update UI state if needed
-            if (!isEncryptedContent.value || decryptionType.value !== actualDecryptionTypeFromHeader) {
-              console.log('Updating UI encryption state');
-              isEncryptedContent.value = true;
-              decryptionType.value = actualDecryptionTypeFromHeader;
-            }
-
-            // Check for password
-            if (!decryptionPassword.value) {
-              console.log('No decryption password provided, exiting and waiting for user password input');
-              emit('show-message', {
-                message: `Obsah je šifrován (${decryptionType.value.toUpperCase()}). Zadejte prosím heslo.`,
-                type: 'warning'
-              });
-              isProcessing.value = false;
-              return; // Exit until user provides password
-            }
-
-            // Attempt decryption
-            console.log('Attempting decryption with provided password');
-            try {
-              const keyPassword = decryptionPassword.value;
-
-              console.log('Decrypting with password:', keyPassword); // Only log in development
-
-              const decrypted = CryptoJS.AES.decrypt(actualCipherText, keyPassword);
-              const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
-
-              console.log('Decryption result:', {
-                success: !!decryptedString,
-                decryptedLength: decryptedString.length,
-                preview: decryptedString.substring(0, 30) + (decryptedString.length > 30 ? '...' : '')
-              });
-
-              if (!decryptedString && actualCipherText) {
-                // Check if decryption produced anything
-                throw new Error('Neplatné heslo nebo poškozená data. Dešifrování selhalo.');
-              }
-              revealedTextContent = decryptedString;
-            } catch (decErr) {
-              console.error('Decryption error:', decErr);
-              throw new Error(`Nepodařilo se dešifrovat data: ${decErr.message || 'Neplatné heslo nebo chyba formátu.'}`);
-            }
-          } else {
-            // Not encrypted - check if it starts with TEXT: header from hideTextInImage function
-            console.log('Content is not encrypted, checking for TEXT: header');
-            if (revealedTextContent.startsWith('TEXT:')) {
-              const textHeaderMatch = revealedTextContent.match(/^TEXT:(\d+):(.*)$/s);
-
-              if (textHeaderMatch) {
-                const declaredLength = parseInt(textHeaderMatch[1], 10);
-                const actualContent = textHeaderMatch[2];
-
-                console.log('TEXT header found:', {
-                  declaredLength,
-                  actualContentLength: actualContent.length
-                });
-
-                // Take only the specified length from the content
-                revealedTextContent = actualContent.substring(0, declaredLength);
-              } else {
-                console.warn('TEXT: header format is invalid:', revealedTextContent.substring(0, 50) + '...');
-              }
-            } else {
-              console.warn('No recognized header (TEXT: or ENCRYPTED:) found in content');
-            }
+          // Check if it has a recognizable header
+          if (initialTextPeek && (initialTextPeek.startsWith('TEXT:') || initialTextPeek.startsWith('ENCRYPTED:'))) {
+            // It's likely text, call text processing
+            await processTextReveal(fullCanvas);
+            return;
           }
+        } catch (textPeekError) {
+          // If peek fails, continue to try image processing
+        }
 
-          // Set the result
-          revealedData.value = revealedTextContent;
-          revealedImageUrl.value = ''; // Ensure image URL is cleared if text is found
-
-          // If auto mode, switch to text (as text was successfully revealed)
-          if (revealMode.value === 'auto') {
-            revealMode.value = 'text';
-            console.log('Auto mode: switched to text mode after successful text reveal');
-          }
-
-          emit('show-message', {
-            message: 'Text byl úspěšně odkryt.',
-            type: 'success'
-          });
-          scrollTo('.scroll-to-decode');
-        } catch (textError) {
-          console.error('Text reveal error:', textError);
-
-          // If auto mode, try image reveal
-          if (revealMode.value === 'auto') {
-            console.log('Auto mode: Text reveal failed, attempting image reveal');
-            emit('show-message', { message: 'Nepodařilo se odkrýt text, zkouším odkrýt obrázek...', type: 'info' });
-
-            try {
-              const revealedImageData = await revealImageFromImage(fullCanvas, revealBitsPerChannel.value);
-              console.log('Image successfully revealed:', {
-                width: revealedImageData.width,
-                height: revealedImageData.height
-              });
-
-              const revealedCanvas = document.createElement('canvas');
-              revealedCanvas.width = revealedImageData.width;
-              revealedCanvas.height = revealedImageData.height;
-
-              const revealedCtx = revealedCanvas.getContext('2d');
-              if (!revealedCtx) throw new Error('Nelze získat kontext pro zobrazení odkrytého obrázku.');
-              revealedCtx.putImageData(revealedImageData, 0, 0);
-
-              revealedImageUrl.value = revealedCanvas.toDataURL('image/png');
-              revealedData.value = ''; // Ensure text data is cleared
-
-              revealMode.value = 'image'; // Switch mode to image as it was successfully revealed
-              console.log('Auto mode: switched to image mode after successful image reveal');
-
-              emit('show-message', {
-                message: 'Obrázek byl úspěšně odkryt.',
-                type: 'success'
-              });
-              scrollTo('.scroll-to-decode');
-            } catch (imageError) {
-              console.error('Image reveal error (after text fail in auto):', imageError);
-              throw new Error(`Automatická detekce selhala. Text: ${textError.message}. Obrázek: ${imageError.message}`);
-            }
-          } else {
-            // In text mode (not auto), show only text error
-            throw textError;
+        // If no text header found or error, try image processing
+        try {
+          await processImageReveal(fullCanvas);
+          return;
+        } catch (imageError) {
+          // If image fails too, try one more time with text (full reveal)
+          try {
+            await processTextReveal(fullCanvas);
+            return;
+          } catch (textError) {
+            // If both methods fail, show consolidated error
+            throw new Error(`Automatická detekce selhala. Nelze rozpoznat formát ukrytých dat.`);
           }
         }
+      } else if (revealMode.value === 'text') {
+        // Text mode specifically selected
+        await processTextReveal(fullCanvas);
       } else if (revealMode.value === 'image') {
-        // Explicitly reveal image
-        console.log('Attempting to reveal as image (explicit image mode)');
-        try {
-          const revealedImageData = await revealImageFromImage(fullCanvas, revealBitsPerChannel.value);
-          console.log('Image successfully revealed:', {
-            width: revealedImageData.width,
-            height: revealedImageData.height
-          });
-
-          const revealedCanvas = document.createElement('canvas');
-          revealedCanvas.width = revealedImageData.width;
-          revealedCanvas.height = revealedImageData.height;
-
-          const revealedCtx = revealedCanvas.getContext('2d');
-          if (!revealedCtx) throw new Error('Nelze získat kontext pro zobrazení odkrytého obrázku.');
-          revealedCtx.putImageData(revealedImageData, 0, 0);
-
-          revealedImageUrl.value = revealedCanvas.toDataURL('image/png');
-          revealedData.value = '';
-
-          emit('show-message', {
-            message: 'Obrázek byl úspěšně odkryt.',
-            type: 'success'
-          });
-        } catch (e) {
-          console.error('Image reveal error (manual image mode):', e);
-          throw new Error(`Nepodařilo se odkrýt obrázek: ${e.message}`);
-        }
+        // Image mode specifically selected
+        await processImageReveal(fullCanvas);
       }
     } catch (e) {
-      console.error('General reveal error:', e);
       emit('show-message', {
         message: `Chyba při odkrývání: ${e.message}`,
         type: 'error'
       });
       scrollTo('.result-alert');
     } finally {
+      console.log('Reveal process completed');
       isProcessing.value = false;
+    }
+
+    // Helper function to process text reveal with all edge cases
+    async function processTextReveal(canvas) {
+      let revealedTextContent = await revealTextFromImage(canvas, revealBitsPerChannel.value);
+
+      if (revealedTextContent.startsWith('ENCRYPTED:')) {
+        const headerMatch = revealedTextContent.match(/^ENCRYPTED:(AES-128|AES-256):(.*)$/s);
+
+        if (!headerMatch) {
+          throw new Error('Chybný formát šifrované hlavičky.');
+        }
+
+        const detectedHeaderEncType = headerMatch[1]; // "AES-128" or "AES-256"
+        const actualCipherText = headerMatch[2];
+        const actualDecryptionTypeFromHeader = detectedHeaderEncType === 'AES-128' ? 'aes128' : 'aes256';
+
+        // Update UI state for encryption
+        isEncryptedContent.value = true;
+        decryptionType.value = actualDecryptionTypeFromHeader;
+
+        // Check for password
+        if (!decryptionPassword.value) {
+          emit('show-message', {
+            message: `Obsah je šifrován (${decryptionType.value.toUpperCase()}). Zadejte prosím heslo.`,
+            type: 'warning'
+          });
+
+          // Always show the decryption UI and update the message
+          revealedData.value = 'Zašifrovaný obsah. Zadejte prosím heslo pro dešifrování.';
+
+          scrollTo('.scroll-to-decode');
+          return;
+        }
+
+        // Attempt decryption
+        try {
+          const decrypted = CryptoJS.AES.decrypt(actualCipherText, decryptionPassword.value);
+          const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);
+
+          if (!decryptedString && actualCipherText) {
+            throw new Error('Neplatné heslo nebo poškozená data.');
+          }
+          revealedTextContent = decryptedString;
+        } catch (decErr) {
+          throw new Error(`Nepodařilo se dešifrovat data: ${decErr.message || 'Neplatné heslo nebo chyba formátu.'}`);
+        }
+      } else if (revealedTextContent.startsWith('TEXT:')) {
+        // Clean up the text header
+        const textHeaderMatch = revealedTextContent.match(/^TEXT:(\d+):(.*)$/s);
+        if (textHeaderMatch) {
+          const declaredLength = parseInt(textHeaderMatch[1], 10);
+          const actualContent = textHeaderMatch[2];
+          revealedTextContent = actualContent.substring(0, declaredLength);
+        }
+      }
+
+      // Set the result
+      revealedData.value = revealedTextContent;
+      revealedImageUrl.value = ''; // Clear image result
+
+      emit('show-message', {
+        message: 'Text byl úspěšně odkryt.',
+        type: 'success'
+      });
+
+      scrollTo('.scroll-to-decode');
+    }
+
+    // Helper function to process image reveal with all edge cases
+    async function processImageReveal(canvas) {
+      const revealedImageData = await revealImageFromImage(canvas, revealBitsPerChannel.value);
+
+      // Check if the revealed data could be encrypted image header
+      const headerBytes = new Uint8Array(revealedImageData.data.buffer, 0, Math.min(50, revealedImageData.data.length));
+      const headerText = new TextDecoder().decode(headerBytes);
+
+      // Look for encryption header in image data
+      if (headerText.includes('ENCRYPTED:')) {
+        // Handle encrypted image - this is just a basic check
+        // Full implementation would need to extract encryption details
+        isEncryptedContent.value = true;
+
+        // Determine encryption type from header
+        if (headerText.includes('AES-128')) {
+          decryptionType.value = 'aes128';
+        } else if (headerText.includes('AES-256')) {
+          decryptionType.value = 'aes256';
+        }
+
+        if (!decryptionPassword.value) {
+          emit('show-message', {
+            message: `Obsah je šifrován (${decryptionType.value.toUpperCase()}). Zadejte prosím heslo.`,
+            type: 'warning'
+          });
+
+          // Show placeholder indicating encryption
+          revealedImageUrl.value = ''; // Clear any image
+          revealedData.value = 'Zašifrovaný obsah (obrázek). Zadejte prosím heslo pro dešifrování.';
+
+          scrollTo('.scroll-to-decode');
+          return;
+        }
+
+        // Decrypt image processing would be implemented here
+        // For now we'll throw an error
+        throw new Error('Dešifrování obrázků není aktuálně podporováno.');
+      }
+
+      // Regular unencrypted image processing
+      const revealedCanvas = document.createElement('canvas');
+      revealedCanvas.width = revealedImageData.width;
+      revealedCanvas.height = revealedImageData.height;
+
+      const revealedCtx = revealedCanvas.getContext('2d');
+      if (!revealedCtx) throw new Error('Nelze získat kontext pro zobrazení odkrytého obrázku.');
+      revealedCtx.putImageData(revealedImageData, 0, 0);
+
+      revealedImageUrl.value = revealedCanvas.toDataURL('image/png');
+      revealedData.value = ''; // Clear text data
+
+      emit('show-message', {
+        message: 'Obrázek byl úspěšně odkryt.',
+        type: 'success'
+      });
+
+      scrollTo('.scroll-to-decode');
     }
   }
 
@@ -1259,13 +1220,19 @@
   // Reset výstupu při změně záložky
   function resetOutputs() {
     if (activeTab.value === 'hide') {
+      // Reset reveal tab state
       stegoFile.value = null;
       stegoImagePreview.value = '';
       revealedData.value = '';
       revealedImageUrl.value = '';
       isEncryptedContent.value = false;
       decryptionPassword.value = '';
+      decryptionType.value = 'none';
+      showDecryptPassword.value = false;
+      revealMode.value = 'auto'; // Reset to default mode
+      revealBitsPerChannel.value = 1; // Reset to default bits
     } else if (activeTab.value === 'reveal') {
+      // Reset hide tab state
       stegoImageUrl.value = '';
       carrierFile.value = null;
       secretText.value = '';
@@ -1276,6 +1243,9 @@
       secretImageInfo.value = null;
       encryptionType.value = 'none';
       encryptionPassword.value = '';
+      showPassword.value = false;
+      hideMode.value = 'text'; // Reset to default mode
+      bitsPerChannel.value = 1; // Reset to default bits
     }
 
     emit('show-message', { message: '', type: 'info' });
@@ -1341,31 +1311,55 @@
     secretImagePreview.value = '';
     secretImageInfo.value = null;
 
+    // Reset encryption state when switching modes
+    encryptionType.value = 'none';
+    encryptionPassword.value = '';
+    showPassword.value = false;
+
     updateMaxTextLength();
 
-    if (newMode === 'image') {
-      encryptionType.value = 'none';
-      encryptionPassword.value = '';
-    }
+    emit('show-message', { message: '', type: 'info' });
+
+    // Also reset the output preview
+    stegoImageUrl.value = '';
   });
 
-  watch(revealMode, () => {
+  watch(revealMode, (newMode) => {
     // Reset revealed data when switching reveal modes
     revealedData.value = '';
     revealedImageUrl.value = '';
+
+    // Reset decryption state when switching modes
+    if (newMode !== 'text') {
+      decryptionPassword.value = '';
+      isEncryptedContent.value = false;
+    }
+
+    // Reset error messages
     emit('show-message', { message: '', type: 'info' });
+
+    // If auto mode was selected and we have a stegoFile already loaded,
+    // we should skip running the detection again since onStegoImageSelected already did it
+    if (newMode === 'auto' && stegoFile.value && stegoImagePreview.value) {
+      // Don't do anything special for auto mode selection if image is already loaded
+      // The detection will happen when user clicks the reveal button
+    }
   });
 
-  watch(bitsPerChannel, () => {
-    // Reset output result when changing bits per channel
-    stegoImageUrl.value = '';
-    emit('show-message', { message: '', type: 'info' });
-  });
+  watch([bitsPerChannel, revealBitsPerChannel], () => {
+    // Reset output results when changing bits settings
+    if (activeTab.value === 'hide') {
+      stegoImageUrl.value = '';
+    } else {
+      revealedData.value = '';
+      revealedImageUrl.value = '';
+    }
 
-  watch(revealBitsPerChannel, () => {
-    // Reset revealed data when changing bits per channel for reveal
-    revealedData.value = '';
-    revealedImageUrl.value = '';
+    // Update capacity if in hide mode
+    if (activeTab.value === 'hide') {
+      updateMaxTextLength();
+    }
+
     emit('show-message', { message: '', type: 'info' });
   });
   // Add this as a computed property
