@@ -171,7 +171,6 @@
             </div>
 
             <v-btn color="secondary" @click="performHideInImage" :disabled="isProcessing || !canPerformHide" :loading="isProcessing">Ukrýt zprávu</v-btn>
-            
           </v-card-text>
         </v-card>
 
@@ -288,15 +287,17 @@
             <div v-if="revealedData && !revealedImageUrl" class="revealed-text">
               <v-textarea v-model="revealedData" label="Odkrytý text" rows="5" auto-grow outlined readonly class="mb-4" variant="outlined"></v-textarea>
 
-              <v-btn color="success" @click="copyRevealedText">
-                <v-icon class="mr-2">mdi-content-copy</v-icon>
-                Kopírovat do schránky
-              </v-btn>
+              <div class="d-flex gap-2">
+                <v-btn color="success" @click="copyRevealedText">
+                  <v-icon class="mr-2">mdi-content-copy</v-icon>
+                  Kopírovat do schránky
+                </v-btn>
 
-              <v-btn color="success" class="ml-2" @click="downloadRevealedText">
-                <v-icon class="mr-2">mdi-download</v-icon>
-                Stáhnout jako TXT
-              </v-btn>
+                <v-btn color="success" @click="downloadRevealedText">
+                  <v-icon class="mr-2">mdi-download</v-icon>
+                  Stáhnout jako TXT
+                </v-btn>
+              </div>
             </div>
 
             <!-- Odkrytý obrázek -->

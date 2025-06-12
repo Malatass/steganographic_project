@@ -19,7 +19,7 @@
               prepend-icon="mdi-music-note"
               outlined
               variant="outlined"
-               class="mt-1"
+              class="mt-1"
               @update:model-value="onCarrierAudioSelected"
               :disabled="isProcessing"
             ></v-file-input>
@@ -75,23 +75,29 @@
               <h4 class="mb-2">Audio s ukrytou zprávou:</h4>
               <audio controls :src="stegoAudioUrl" class="w-100"></audio>
               <div class="d-flex gap-2 mt-2">
-              <v-btn color="secondary" @click="prepareStegoAudioForReveal">
-                <v-icon class="mr-2">mdi-magnify</v-icon>
-                Odkrýt zprávu z tohoto audia
-              </v-btn>
+                <v-btn color="secondary" @click="prepareStegoAudioForReveal">
+                  <v-icon class="mr-2">mdi-magnify</v-icon>
+                  Odkrýt zprávu z tohoto audia
+                </v-btn>
 
-              <v-btn color="success" class="ml-2" @click="openDownloadDialog">
-                <v-icon class="mr-2">mdi-download</v-icon>
-                Stáhnout audio
-              </v-btn>
+                <v-btn color="success" class="ml-2" @click="openDownloadDialog">
+                  <v-icon class="mr-2">mdi-download</v-icon>
+                  Stáhnout audio
+                </v-btn>
               </div>
-              
             </div>
             <v-dialog v-model="downloadDialog" max-width="400">
               <v-card>
                 <v-card-title>Stáhnout soubor</v-card-title>
                 <v-card-text>
-                  <v-text-field v-model="downloadFileName" label="Název souboru" outlined :suffix="downloadFileSuffix" autofocus variant="outlined"></v-text-field>
+                  <v-text-field
+                    v-model="downloadFileName"
+                    label="Název souboru"
+                    outlined
+                    :suffix="downloadFileSuffix"
+                    autofocus
+                    variant="outlined"
+                  ></v-text-field>
                 </v-card-text>
                 <v-card-actions>
                   <v-spacer></v-spacer>
@@ -132,17 +138,28 @@
               @update:model-value="onStegoAudioForRevealSelected"
               :disabled="isProcessing"
             ></v-file-input>
-            <v-btn color="secondary" @click="performRevealFromAudioFile" :disabled="(!stegoAudioBufferForReveal && !useInMemoryAudio) || isProcessing" :loading="isProcessing">
+            <v-btn
+              color="secondary"
+              @click="performRevealFromAudioFile"
+              :disabled="(!stegoAudioBufferForReveal && !useInMemoryAudio) || isProcessing"
+              :loading="isProcessing"
+            >
               Odkrýt zprávu
             </v-btn>
 
             <div v-if="revealedMessage" class="mt-6">
               <h4 class="mb-2">Odkrytá zpráva:</h4>
               <v-textarea v-model="revealedMessage" label="Odkrytý text" rows="5" auto-grow outlined readonly variant="outlined" class="mb-4"></v-textarea>
-              <v-btn color="success" @click="copyRevealedMessage">
-                <v-icon class="mr-2">mdi-content-copy</v-icon>
-                Kopírovat do schránky
-              </v-btn>
+              <div class="d-flex gap-2">
+                <v-btn color="success" @click="copyRevealedMessage">
+                  <v-icon class="mr-2">mdi-content-copy</v-icon>
+                  Kopírovat do schránky
+                </v-btn>
+                <v-btn color="success" @click="downloadRevealedMessage">
+                  <v-icon class="mr-2">mdi-download</v-icon>
+                  Stáhnout jako TXT
+                </v-btn>
+              </div>
             </div>
           </v-card-text>
         </v-card>
@@ -330,7 +347,10 @@
     isProcessing.value = true;
     if (stegoAudioFileForReveal.value) {
       if (stegoAudioFileForReveal.value.type !== 'audio/wav') {
-        emit('show-message', { message: 'Varování: Nejlepší výsledky dosáhnete s formátem WAV. MP3 a jiné formáty mohou způsobit ztrátu dat.', type: 'warning' });
+        emit('show-message', {
+          message: 'Varování: Nejlepší výsledky dosáhnete s formátem WAV. MP3 a jiné formáty mohou způsobit ztrátu dat.',
+          type: 'warning'
+        });
       }
     }
     stegoAudioBufferForReveal.value = await loadAudioFileAsBuffer(stegoAudioFileForReveal.value);
@@ -362,7 +382,10 @@
     }
     const message = revealFromAudio(bufferToReveal);
     if (!message) {
-      emit('show-message', { message: 'Nepodařilo se odkrýt zprávu. Pravděpodobně byl použit nevhodný formát (např. MP3) nebo audio neobsahuje platnou ukrytou zprávu.', type: 'warning' });
+      emit('show-message', {
+        message: 'Nepodařilo se odkrýt zprávu. Pravděpodobně byl použit nevhodný formát (např. MP3) nebo audio neobsahuje platnou ukrytou zprávu.',
+        type: 'warning'
+      });
       revealedMessage.value = '';
       isProcessing.value = false;
       return;
@@ -388,6 +411,24 @@
       .writeText(revealedMessage.value)
       .then(() => emit('show-message', { message: 'Text byl zkopírován do schránky.', type: 'success' }))
       .catch((err) => emit('show-message', { message: `Nepodařilo se zkopírovat text: ${err}`, type: 'error' }));
+  }
+
+  function downloadRevealedMessage() {
+    if (!revealedMessage.value) {
+      emit('show-message', { message: 'Není k dispozici žádný text ke stažení.', type: 'error' });
+      return;
+    }
+
+    const blob = new Blob([revealedMessage.value], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `odkryta_zprava_audio.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+
+    emit('show-message', { message: 'Odkrytý text byl úspěšně stažen.', type: 'success' });
   }
 
   // Helper function to convert AudioBuffer to a WAV Blob (simplified)
