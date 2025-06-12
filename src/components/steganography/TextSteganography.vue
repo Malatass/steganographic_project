@@ -87,6 +87,11 @@
               <v-textarea v-model="secretMessage" rows="2" auto-grow outlined hide-details variant="outlined"></v-textarea>
             </div>
 
+            <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
+              <strong>Poznámka:</strong>
+              Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+            </v-alert>
+
             <div v-if="secretMessage" class="binary-representation mt-2">
               <div class="d-flex align-center">
                 <v-icon size="small" class="mr-1">mdi-code-brackets</v-icon>
@@ -979,6 +984,17 @@
       emit('show-message', { message: '', type: 'info' });
     }
   });
+
+  // Add watcher for tab changes and reset logic
+  watch(activeTab, () => {
+    resetOutputs();
+  });
+
+  function hasNonLatinChars(text) {
+    if (!text) return false;
+    // Checks for any non-ASCII character (including Czech)
+    return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
+  }
 </script>
 
 <style scoped>

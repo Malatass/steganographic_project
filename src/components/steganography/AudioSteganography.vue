@@ -11,6 +11,7 @@
         <v-card class="mb-8 pa-4" outlined>
           <v-card-title class="text-h5">Ukrýt zprávu do audia</v-card-title>
           <v-card-text>
+            <label>Vyberte audio jako nosič:</label>
             <v-file-input
               v-model="carrierAudioFile"
               label="Vyberte audio nosič (WAV, MP3)"
@@ -18,7 +19,7 @@
               prepend-icon="mdi-music-note"
               outlined
               variant="outlined"
-              class="mb-4"
+               class="mt-1"
               @update:model-value="onCarrierAudioSelected"
               :disabled="isProcessing"
             ></v-file-input>
@@ -49,6 +50,10 @@
                 </div>
                 <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
               </div>
+              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
+                <strong>Poznámka:</strong>
+                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+              </v-alert>
               <v-textarea
                 v-model="secretMessage"
                 rows="3"
@@ -147,7 +152,7 @@
 </template>
 
 <script setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, watch } from 'vue';
   import { hideInAudio, revealFromAudio } from '../../stegonography/audio'; // Correct path
 
   const emit = defineEmits(['show-message']);
@@ -445,6 +450,17 @@
       view.setUint8(offset + i, string.charCodeAt(i));
     }
   }
+
+  function hasNonLatinChars(text) {
+    if (!text) return false;
+    // Checks for any non-ASCII character (including Czech)
+    return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
+  }
+
+  // Add watcher for tab changes and reset logic
+  watch(activeTab, () => {
+    resetOutputs();
+  });
 </script>
 
 <style scoped>

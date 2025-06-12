@@ -30,7 +30,7 @@
 
             <!-- Výběr obrázku pro nosič -->
             <div class="mb-4">
-              <label>Vyberte obrázek nosič:</label>
+              <label>Vyberte obrázek jako nosič:</label>
               <v-file-input
                 v-model="carrierFile"
                 accept="image/*"
@@ -118,7 +118,7 @@
                 </div>
               </div>
             </div>
-            <v-alert v-if="hideMode === 'text' && hasNonLatinChars(secretText)" type="info" variant="tonal" density="comfortable" class="mt-2">
+            <v-alert v-if="hideMode === 'text' && hasNonLatinChars(secretText)" type="warning" variant="tonal" density="comfortable" class="mt-2">
               <strong>Poznámka:</strong>
               Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
             </v-alert>
@@ -1385,7 +1385,8 @@
 
   function hasNonLatinChars(text) {
     if (!text) return false;
-    return /[^\x00-\x7F]/.test(text); // Tests for non-ASCII characters
+    // Checks for any non-ASCII character (including Czech)
+    return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
 </script>
 

@@ -13,6 +13,7 @@
           <v-card-subtitle>Tato funkce umožňuje ukrýt zprávu do jednoho snímku videa. Pro odkrytí bude nutné znát číslo snímku.</v-card-subtitle>
 
           <v-card-text>
+            <label>Vyberte video jako nosič:</label>
             <v-file-input
               v-model="videoFile"
               label="Vyberte video (MP4)"
@@ -20,7 +21,7 @@
               prepend-icon="mdi-video"
               outlined
               variant="outlined"
-              class="mb-4"
+                class="mt-1"
               @update:model-value="onVideoSelected"
               :disabled="isProcessing"
             ></v-file-input>
@@ -59,6 +60,10 @@
                 </div>
                 <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
               </div>
+              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
+                <strong>Poznámka:</strong>
+                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+              </v-alert>
               <v-textarea
                 v-model="secretMessage"
                 rows="3"
@@ -218,7 +223,7 @@
 </template>
 
 <script setup>
-  import { ref } from 'vue';
+  import { ref, watch } from 'vue';
   import { hideTextInVideoFrame, revealTextFromVideoFrame } from '../../stegonography/video';
 
   const emit = defineEmits(['show-message']);
@@ -475,6 +480,34 @@
     reader.readAsText(file);
     event.target.value = '';
   }
+
+  function hasNonLatinChars(text) {
+    if (!text) return false;
+    // Checks for any non-ASCII character (including Czech)
+    return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
+  }
+
+  // Add watcher for tab changes and reset logic
+  watch(activeTab, (newTab) => {
+    if (newTab === 'hide') {
+      // Reset reveal section
+      revealedMessage.value = '';
+      stegoVideoFile.value = null;
+      stegoImageFile.value = null;
+      revealFrameIndex.value = 0;
+      useInMemoryFrame.value = false;
+    } else {
+      // Reset hide section
+      secretMessage.value = '';
+      videoFile.value = null;
+      videoInfo.value = null;
+      frameIndex.value = 0;
+      modifiedFrameUrl.value = '';
+      currentFrameIndex.value = 0;
+      stegoFrameCanvas.value = null;
+    }
+    emit('show-message', { message: '', type: 'info' });
+  });
 </script>
 
 <style scoped>
