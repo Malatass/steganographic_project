@@ -505,17 +505,7 @@ function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
   // We're only using RGB channels, so it's actually 3 bytes per pixel
   const secretSize = secretCanvas.width * secretCanvas.height * 3 * 8;
 
-  console.log('Image capacity check:', {
-    baseImageSize: `${baseCanvas.width}x${baseCanvas.height}`,
-    secretImageSize: `${secretCanvas.width}x${secretCanvas.height}`,
-    baseCapacity: `${Math.floor(baseCapacity / 8)} bytes`,
-    secretSize: `${Math.floor(secretSize / 8)} bytes`,
-    willFit: secretSize <= baseCapacity,
-    bitsPerChannel
-  });
 
-  console.log(secretSize);
-  console.log(baseCapacity);
 
   // If the secret image is too large, resize it
   if (secretSize > baseCapacity) {
@@ -526,7 +516,6 @@ function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
     const newWidth = Math.max(1, Math.floor(secretCanvas.width * resizeFactor));
     const newHeight = Math.max(1, Math.floor(secretCanvas.height * resizeFactor));
 
-    console.log(`Resizing image from ${secretCanvas.width}x${secretCanvas.height} to ${newWidth}x${newHeight} (factor: ${resizeFactor.toFixed(2)})`);
 
     // Create a temporary canvas for resizing
     const resizedCanvas = document.createElement('canvas');

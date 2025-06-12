@@ -349,7 +349,6 @@
 
       emit('show-message', { message: 'Zpráva byla úspěšně ukryta ve snímku videa.', type: 'success' });
     } catch (error) {
-      console.error('Error hiding message in video:', error);
       emit('show-message', { message: `Chyba při ukrývání zprávy: ${error.message}`, type: 'error' });
     } finally {
       isProcessing.value = false;
@@ -404,7 +403,6 @@
       revealedMessage.value = revealed;
       emit('show-message', { message: 'Zpráva byla úspěšně odkryta.', type: 'success' });
     } catch (error) {
-      console.error('Error revealing message:', error);
       emit('show-message', { message: `Chyba při odkrývání zprávy: ${error.message}`, type: 'error' });
       revealedMessage.value = '';
     } finally {

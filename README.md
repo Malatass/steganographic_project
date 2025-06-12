@@ -1,18 +1,26 @@
 # vue-steganography-app
 
-Tento projekt je jednoduchá aplikace pro implementaci steganografických algoritmů. Umožňuje uživatelům skrývat a odkrývat informace v různých typech médií, jako jsou texty, obrázky, audio a video.
+Tento projekt je moderní aplikace pro steganografii, která umožňuje skrývat a odkrývat informace v různých typech médií: text, obrázky, audio a video.
 
-## Funkce
+## Hlavní funkce
 
-- **Výběr algoritmu**: Uživatelé mohou vybrat algoritmus pro skrývání informací pomocí tlačítek nebo karet.
-- **Skrývání a odkrývání**: Uživatelé mohou skrývat informace do vybraného média nebo je odkrýt.
-- **Grafické výstupy**: Aplikace zobrazuje grafické výstupy, jako jsou obrázky a texty, pro lepší vizualizaci.
+- **Výběr steganografické metody**: Uživatel si může zvolit z několika metod pro každý typ média.
+- **Podpora šifrování**: Možnost šifrovat ukrytou zprávu pomocí AES-128 nebo AES-256 (kromě audia a videa).
+- **Stavové zprávy a vizualizace**: Aplikace zobrazuje grafické výstupy, náhledy a upozornění na úspěch či chyby.
+- **Možnost stahování výsledků**: Výsledné obrázky, audio a video snímky lze stáhnout s vlastním názvem.
+- **Import a práce se schránkou**: Podpora vkládání a importu textu/souborů ze schránky nebo souborového systému.
+
+## Důležitá omezení a upozornění
+
+- **Podpora UTF-8 a českých znaků**: Některé metody (zejména textové) plně podporují UTF-8 a české znaky, jiné (např. audio, některé obrazové) pouze ASCII. Pokud zadáte české znaky, zobrazí se upozornění.
+- **Automatická změna velikosti obrázku**: Při skrývání obrázku v obrázku se tajný obrázek automaticky zmenší, pokud je příliš velký. Tato funkce nemusí být vždy 100% spolehlivá a může dojít ke ztrátě detailů.
+- **Audio a video**: Pokud stáhnete audio s ukrytou zprávou a znovu jej nahrajete, může být zpráva ztracena kvůli kompresi (zejména u MP3). Pro nejlepší výsledky používejte WAV. U videa a audia s nízkou kvalitou nebo vysokou kompresí nemusí být možné zprávu úspěšně ukrýt ani odkrýt.
 
 ## Technologie
 
-- **Vue 3**: Moderní JavaScriptový framework pro vytváření uživatelských rozhraní.
-- **Vite**: Rychlý nástroj pro vývoj a budování aplikací.
-- **Vuetify**: Knihovna komponent pro Vue, která usnadňuje vytváření moderních a responzivních uživatelských rozhraní.
+- **Vue 3** – moderní framework pro tvorbu uživatelských rozhraní
+- **Vite** – rychlý vývojový a buildovací nástroj
+- **Vuetify** – komponentová knihovna pro moderní vzhled
 
 ## Instalace
 
@@ -31,24 +39,22 @@ Tento projekt je jednoduchá aplikace pro implementaci steganografických algori
 
 ## Spuštění aplikace
 
-Pro spuštění aplikace v režimu vývoje použijte:
-
+Pro spuštění v režimu vývoje:
 ```
 npm run dev
 ```
 
-## Budování aplikace
+## Build pro produkci
 
-Pro vytvoření produkční verze aplikace použijte:
-
+Pro vytvoření produkční verze:
 ```
 npm run build
 ```
 
 ## Přispívání
 
-Pokud máte návrhy na vylepšení nebo opravy chyb, neváhejte přispět do projektu prostřednictvím pull requestů.
+Návrhy na vylepšení nebo opravy chyb jsou vítány formou pull requestů.
 
-## Licencování
+## Licence
 
-Tento projekt je licencován pod MIT licencí.
+MIT

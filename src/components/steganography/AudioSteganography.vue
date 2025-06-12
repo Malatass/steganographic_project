@@ -329,7 +329,6 @@
   async function onStegoAudioForRevealSelected() {
     isProcessing.value = true;
     if (stegoAudioFileForReveal.value) {
-      console.log('[AUDIO UI] Selected file for reveal:', stegoAudioFileForReveal.value.name, '| Type:', stegoAudioFileForReveal.value.type);
       if (stegoAudioFileForReveal.value.type !== 'audio/wav') {
         emit('show-message', { message: 'Varování: Nejlepší výsledky dosáhnete s formátem WAV. MP3 a jiné formáty mohou způsobit ztrátu dat.', type: 'warning' });
       }
@@ -361,18 +360,15 @@
       isProcessing.value = false;
       return;
     }
-    console.log('[AUDIO UI] Decoding audio buffer.');
     const message = revealFromAudio(bufferToReveal);
     if (!message) {
       emit('show-message', { message: 'Nepodařilo se odkrýt zprávu. Pravděpodobně byl použit nevhodný formát (např. MP3) nebo audio neobsahuje platnou ukrytou zprávu.', type: 'warning' });
-      console.warn('[AUDIO UI] Decoding failed: No message found or magic header missing.');
       revealedMessage.value = '';
       isProcessing.value = false;
       return;
     }
     revealedMessage.value = message;
     emit('show-message', { message: 'Zpráva úspěšně odkryta.', type: 'success' });
-    console.log('[AUDIO UI] Decoded message:', message);
     isProcessing.value = false;
   }
 

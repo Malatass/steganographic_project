@@ -52,7 +52,6 @@ function binaryToText(binary) {
 export function hideInAudio(originalAudioBuffer, message) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const messageWithHeader = MAGIC_HEADER + message;
-  console.log('[AUDIO ENCODE] Encoding message with magic header:', MAGIC_HEADER, '| Message:', message);
   const messageBinary = textToBinary(messageWithHeader) + END_OF_MESSAGE_DELIMITER_BINARY;
 
   const channelData = originalAudioBuffer.getChannelData(0); // Use the first channel
@@ -94,7 +93,6 @@ export function hideInAudio(originalAudioBuffer, message) {
       newChannelData[sampleIndex] = Math.max(-1.0, Math.min(1.0, intSample / 32767));
     }
   }
-  console.log('[AUDIO ENCODE] Message successfully encoded. Total bits:', messageBinary.length, 'Header:', MAGIC_HEADER, 'Header (Base64):', MAGIC_HEADER_BASE64);
 
   return stegoAudioBuffer;
 }
@@ -138,7 +136,6 @@ export function revealFromAudio(stegoAudioBuffer) {
         return null;
       }
       const revealed = decoded.substring(MAGIC_HEADER.length);
-      console.log('[AUDIO DECODE] Magic header found. Revealed message:', revealed);
       return revealed;
     }
   }

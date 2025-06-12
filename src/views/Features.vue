@@ -23,38 +23,14 @@
           </div>
           <v-card-text class="pa-5">
             <p class="mb-3 text-body-1">
-              <strong>Steganografie</strong>
-              je umění a věda o skrývání informací uvnitř jiného, na první pohled nevinného média tak, aby sama existence skryté informace zůstala utajena. Na
-              rozdíl od šifrování, kde je zřejmé, že je zpráva zašifrovaná, steganografie ukrývá samotnou existenci tajné komunikace.
+              <strong>Steganografie</strong> je umění a věda o skrývání informací uvnitř jiného média tak, aby samotná existence skryté informace zůstala utajena. Na rozdíl od šifrování, kde je zřejmé, že je zpráva zašifrovaná, steganografie ukrývá samotnou existenci tajné komunikace.
             </p>
-            <p class="mb-3 text-body-1">Naše aplikace nabízí několik metod steganografie pro různé typy médií:</p>
-            <ul class="feature-list mb-3">
-              <li>
-                <v-icon color="primary" size="small" class="mr-2">mdi-format-text</v-icon>
-                <strong>Textovou steganografii</strong>
-                - ukrývání zpráv v běžném textu
-              </li>
-              <li>
-                <v-icon color="success" size="small" class="mr-2">mdi-image</v-icon>
-                <strong>Obrazovou steganografii</strong>
-                - ukrývání informací v pixelech obrázku
-              </li>
-              <li>
-                <v-icon color="info" size="small" class="mr-2">mdi-volume-high</v-icon>
-                <strong>Zvukovou steganografii</strong>
-                - ukrývání zpráv v audio souborech
-              </li>
-              <li>
-                <v-icon color="error" size="small" class="mr-2">mdi-video</v-icon>
-                <strong>Video steganografii</strong>
-                - tato funkce je ve vývoji
-              </li>
-            </ul>
-            <v-alert color="secondary" class="mt-4" density="compact" variant="tonal" border="start">
+            <p class="mb-3 text-body-1">
+              Tato aplikace umožňuje skrývat a odkrývat informace v textu, obrázcích, audiosouborech a videích. Každý typ média nabízí několik metod, které se liší kapacitou, nenápadností a odolností vůči úpravám.
+            </p>
+            <v-alert color="info" class="mt-4" density="compact" variant="tonal" border="start">
               <p class="text-body-1 mb-0">
-                Většina metod umožňuje také dodatečné
-                <strong>šifrování</strong>
-                ukrývané zprávy pomocí AES-128 nebo AES-256, což přidává další vrstvu zabezpečení.
+                <strong>Upozornění:</strong> Některé metody mají omezenou podporu pro speciální znaky (například české znaky nebo znaky s diakritikou). Pokud zadáte takové znaky, aplikace vás upozorní na možné problémy s kompatibilitou.
               </p>
             </v-alert>
           </v-card-text>
@@ -68,12 +44,14 @@
           </div>
           <v-card-text class="pa-5">
             <p class="mb-4 text-body-1">
-              Textová steganografie ukrývá zprávy v běžném textu pomocí různých technik manipulace textu. Tyto metody jsou navrženy tak, aby minimálně narušily
-              čitelnost a přirozenost původního textu.
+              Textová steganografie umožňuje ukrývat zprávy v běžném textu pomocí různých technik manipulace s textem. Tyto metody jsou navrženy tak, aby minimálně narušily čitelnost a přirozenost původního textu.
             </p>
-
+            <v-alert color="warning" class="mb-4" density="compact" variant="tonal" border="start">
+              <p class="text-body-1 mb-0">
+                <strong>Poznámka:</strong> Některé metody plně podporují UTF-8 a české znaky (například neviditelné znaky, české spojky), jiné pouze ASCII (například oddělovače, Baconova šifra, podobná písmena). Pokud zadáte české znaky do nepodporované metody, může být výsledek nečitelný nebo nefunkční.
+              </p>
+            </v-alert>
             <h3 class="text-h6 mt-5 mb-3 section-title">Dostupné metody</h3>
-
             <v-expansion-panels variant="accordion" class="custom-panels">
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
@@ -82,20 +60,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Vkládá tajnou zprávu mezi definované oddělovače (např.
-                    <code class="code-inline" v-pre>{{ START }}</code>
-                    a
-                    <code class="code-inline" v-pre>{{ END }}</code>
-                    ). Tyto oddělovače lze přizpůsobit.
+                    <strong>Popis:</strong> Vkládá tajnou zprávu mezi definované oddělovače (např. <code class="code-inline" v-pre>{{ START }}</code> a <code class="code-inline" v-pre>{{ END }}</code>). Oddělovače lze přizpůsobit.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Vhodné pro situace, kdy lze skrýt oddělovače v delším textu a kdy příjemce ví, jaké oddělovače hledat.
+                    <strong>Omezení:</strong> Podporuje pouze ASCII znaky. Pokud použijete české znaky, výsledek nemusí být správný.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="primary" size="small" class="mr-2">mdi-code-json</v-icon>
@@ -103,16 +74,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Převádí tajnou zprávu do Base64 a vkládá ji mezi definované oddělovače. Tím se zakryje čitelnost zprávy při náhodném nalezení.
+                    <strong>Popis:</strong> Převádí tajnou zprávu do Base64 a vkládá ji mezi definované oddělovače. Tím se zakryje čitelnost zprávy při náhodném nalezení.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Poskytuje vyšší bezpečnost než prosté oddělovače, protože tajná zpráva je zakódovaná a není čitelná pouhým okem.
+                    <strong>Omezení:</strong> Podporuje pouze ASCII znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="primary" size="small" class="mr-2">mdi-format-indent-increase</v-icon>
@@ -120,33 +88,27 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Zakóduje zprávu pomocí neviditelných bílých znaků (mezery, tabulátory) na konci řádků.
+                    <strong>Popis:</strong> Zakóduje zprávu pomocí neviditelných bílých znaků (mezery, tabulátory) na konci řádků.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Velmi nenápadná metoda, vizuálně nezměněný text. Funguje dobře u formátovaného textu, kde jsou konce řádků přirozené.
+                    <strong>Omezení:</strong> Plně podporuje UTF-8 a české znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="primary" size="small" class="mr-2">mdi-eye-off-outline</v-icon>
-                  <span>Zero-width</span>
+                  <span>Zero-width znaky</span>
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Využívá neviditelné znaky s nulovou šířkou (ZWSP, ZWNJ, ZWJ), které se vkládají mezi znaky původního textu.
+                    <strong>Popis:</strong> Využívá neviditelné znaky s nulovou šířkou (ZWSP, ZWNJ, ZWJ), které se vkládají mezi znaky původního textu.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Nejméně detekovatelná metoda, vhodná pro situace s vysokými nároky na utajení. Text vypadá naprosto stejně jako originál.
+                    <strong>Omezení:</strong> Plně podporuje UTF-8 a české znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="primary" size="small" class="mr-2">mdi-format-letter-case</v-icon>
@@ -154,16 +116,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Historická metoda, která využívá dvou různých formátování textu (např. normální/kurzíva) k binárnímu zakódování zprávy.
+                    <strong>Popis:</strong> Historická metoda, která využívá dvou různých formátování textu (např. normální/kurzíva) k binárnímu zakódování zprávy.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Spíše historická a vzdělávací metoda. V originálním textu jsou některá písmena formátována odlišně, což vytváří binární kód.
+                    <strong>Omezení:</strong> Podporuje pouze ASCII znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="primary" size="small" class="mr-2">mdi-format-text-variant</v-icon>
@@ -171,16 +130,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Rozšířená verze Baconovy šifry využívající čtyři různé formáty textu (normální, kurzíva, tučné a podtržené), což umožňuje vyšší kapacitu.
+                    <strong>Popis:</strong> Rozšířená verze Baconovy šifry využívající čtyři různé formáty textu (normální, kurzíva, tučné a podtržené), což umožňuje vyšší kapacitu.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Umožňuje zakódovat více informací než klasická Baconova šifra, ale je výraznější a může vzbudit podezření kvůli neobvyklému formátování.
+                    <strong>Omezení:</strong> Podporuje pouze ASCII znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="primary" size="small" class="mr-2">mdi-format-text-wrapping-overflow</v-icon>
@@ -188,36 +144,61 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Nahrazuje vybraná písmena podobně vypadajícími znaky (např. o→0, l→1, a→а - latinské vs. cyrilice).
+                    <strong>Popis:</strong> Nahrazuje vybraná písmena podobně vypadajícími znaky (např. o→0, l→1, a→а - latinské vs. cyrilice).
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Text se zdá být stejný, ale obsahuje znaky z různých sad, které nesou skrytou informaci. Nenápadné, dokud někdo nezkoumá kódování
-                    jednotlivých znaků.
+                    <strong>Omezení:</strong> Podporuje pouze ASCII znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
-                  <v-icon color="primary" size="small" class="mr-2">mdi-comma</v-icon>
-                  <span>Čárky</span>
+                  <v-icon color="primary" size="small" class="mr-2">mdi-link-variant</v-icon>
+                  <span>České spojky</span>
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Vkládá nebo vynechává volitelné čárky před spojkami "and" a "or" v anglických textech.
+                    <strong>Popis:</strong> Ukrytí zprávy pomocí volitelných čárek před českými spojkami (a, ale, nebo, či, ...).
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Funguje pouze v angličtině, využívá nejednoznačných pravidel pro používání čárek. Velmi nenápadná metoda, ale s omezenou kapacitou.
+                    <strong>Omezení:</strong> Plně podporuje UTF-8 a české znaky.
+                  </p>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+              <v-expansion-panel>
+                <v-expansion-panel-title class="method-title">
+                  <v-icon color="primary" size="small" class="mr-2">mdi-format-line-spacing</v-icon>
+                  <span>Rozestupy slov</span>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text class="pa-4">
+                  <p class="text-body-1">
+                    <strong>Popis:</strong> Ukrytí zprávy pomocí různých typů mezer mezi slovy (normální mezera vs. úzká mezera).
+                  </p>
+                  <p class="text-body-1">
+                    <strong>Omezení:</strong> Plně podporuje UTF-8 a české znaky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
+          </v-card-text>
+        </v-card>
 
-            <!-- Obrazová steganografie - upravené expanzní panely -->
+        <!-- Obrazová steganografie -->
+        <v-card class="mb-8 feature-card elevation-2" rounded="lg">
+          <div class="feature-header primary">
+            <v-icon size="large" class="feature-icon">mdi-image</v-icon>
+            <h2 class="text-h5 font-weight-medium">Obrazová steganografie</h2>
+          </div>
+          <v-card-text class="pa-5">
+            <p class="mb-3 text-body-1">
+              Obrazová steganografie umožňuje ukrývat informace v pixelech obrázku. Každý pixel může nést informaci v nejméně významných bitech barevných kanálů (LSB), což je pro lidské oko téměř nepostřehnutelné.
+            </p>
+            <v-alert color="warning" class="mb-4" density="compact" variant="tonal" border="start">
+              <p class="text-body-1 mb-0">
+                <strong>Upozornění:</strong> Pokud je tajný obrázek příliš velký, aplikace jej automaticky zmenší, aby se vešel do nosného obrázku. Tato změna velikosti nemusí být vždy 100% spolehlivá a může dojít ke ztrátě detailů nebo kvality.
+              </p>
+            </v-alert>
+            <h3 class="text-h6 mt-5 mb-3 section-title">Dostupné metody</h3>
             <v-expansion-panels variant="accordion" class="custom-panels">
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
@@ -226,24 +207,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Metoda ukrývá text do nejméně významných bitů barevných kanálů (červená, zelená, modrá) pixelů obrázku.
+                    <strong>Popis:</strong> Metoda ukrývá text do nejméně významných bitů barevných kanálů (červená, zelená, modrá) pixelů obrázku. Změny jsou pro lidské oko téměř neviditelné, zejména při použití 1 bitu na kanál.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Bity na kanál:</strong>
-                    Můžete zvolit 1-3 bity pro ukládání informací. Více bitů znamená vyšší kapacitu, ale také více vizuálních změn v obrázku.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Výhody:</strong>
-                    Změny jsou pro lidské oko téměř neviditelné, zejména při použití 1 bitu na kanál.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Kapacita:</strong>
-                    Závisí na velikosti obrázku a počtu použitých bitů. Aplikace automaticky zobrazí maximální dostupnou kapacitu.
+                    <strong>Kapacita:</strong> Závisí na velikosti obrázku a počtu použitých bitů. Aplikace automaticky zobrazí maximální dostupnou kapacitu.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="success" size="small" class="mr-2">mdi-image-multiple</v-icon>
@@ -251,20 +221,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Umožňuje ukrýt jeden obrázek do jiného, většího obrázku pomocí metody LSB.
+                    <strong>Popis:</strong> Umožňuje ukrýt jeden obrázek do jiného, většího obrázku pomocí metody LSB. Tajný obrázek je automaticky zmenšen, pokud je třeba, aby se vešel do nosného obrázku.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Proces:</strong>
-                    Tajný obrázek je zmenšen (pokud je třeba), aby se vešel do nosného obrázku, a poté je ukryt v nejméně významných bitech.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Ideální pro skrývání citlivých grafických informací, jako jsou loga, watermarky nebo fotografie.
+                    <strong>Omezení:</strong> Při automatické změně velikosti může dojít ke ztrátě detailů tajného obrázku.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="success" size="small" class="mr-2">mdi-chart-bar</v-icon>
@@ -272,28 +235,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Aplikace poskytuje dvě speciální vizualizace změn provedených v obrázku:
+                    <strong>Popis:</strong> Aplikace poskytuje speciální vizualizace změn provedených v obrázku (rozdílová mapa, zvýrazněná vizualizace), které pomáhají pochopit, kde byla data ukryta.
                   </p>
-                  <ul class="feature-list">
-                    <li>
-                      <v-icon color="success" size="small" class="mr-2">mdi-compare</v-icon>
-                      <strong>Mapa rozdílů:</strong>
-                      Zobrazuje rozdíly mezi původním a steganografickým obrázkem, zesílené pro lepší viditelnost.
-                    </li>
-                    <li>
-                      <v-icon color="success" size="small" class="mr-2">mdi-magnify-plus</v-icon>
-                      <strong>Zvýrazněná data:</strong>
-                      Vizuálně zvýrazňuje bity použité k ukrytí dat, což umožňuje "vidět" ukrytou informaci.
-                    </li>
-                  </ul>
-                  <p class="text-body-1 mt-2">
-                    <strong class="feature-highlight">Účel:</strong>
-                    Tyto vizualizace jsou užitečné pro vzdělávací účely a pro ověření, že data byla skutečně ukryta.
+                  <p class="text-body-1">
+                    <strong>Využití:</strong> Užitečné pro vzdělávací účely a ověření, že data byla skutečně ukryta.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="success" size="small" class="mr-2">mdi-auto-fix</v-icon>
@@ -301,67 +249,101 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Funkce pro automatické rozpoznání typu ukrytých dat (text nebo obrázek) při odkrývání.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Proces:</strong>
-                    Aplikace nejprve zkouší detekovat text, a pokud není nalezen platný textový formát, pokusí se interpretovat data jako obrázek.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Výhody:</strong>
-                    Uživatel nemusí vědět, jaký typ dat byl ukryt v obrázku.
+                    <strong>Popis:</strong> Funkce pro automatické rozpoznání typu ukrytých dat (text nebo obrázek) při odkrývání. Uživatel nemusí vědět, jaký typ dat byl ukryt v obrázku.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
+          </v-card-text>
+        </v-card>
 
-            <!-- Zvuková steganografie - upravené expanzní panely -->
+        <!-- Video steganografie -->
+        <v-card class="mb-8 feature-card elevation-2" rounded="lg">
+          <div class="feature-header primary">
+            <v-icon size="large" class="feature-icon">mdi-video</v-icon>
+            <h2 class="text-h5 font-weight-medium">Video steganografie</h2>
+          </div>
+          <v-card-text class="pa-5">
+            <p class="mb-3 text-body-1">
+              Video steganografie umožňuje ukrývat zprávy do jednotlivých snímků videa pomocí manipulace s nejméně významnými bity (LSB) v obrazových datech. Tato metoda je vhodná pro krátké zprávy a videa s vyšší kvalitou.
+            </p>
+            <v-alert color="warning" class="mb-4" density="compact" variant="tonal" border="start">
+              <p class="text-body-1 mb-0">
+                <strong>Upozornění:</strong> Nejlepších výsledků dosáhnete s videi ve vysoké kvalitě a s minimální kompresí. U silně komprimovaných nebo nízkokvalitních videí nemusí být možné zprávu úspěšně ukrýt ani odkrýt. Kapacita je omezena na jeden snímek a délku zprávy.
+              </p>
+            </v-alert>
+            <h3 class="text-h6 mt-5 mb-3 section-title">Použitá metoda</h3>
+            <v-expansion-panels variant="accordion" class="custom-panels">
+              <v-expansion-panel>
+                <v-expansion-panel-title class="method-title">
+                  <v-icon color="error" size="small" class="mr-2">mdi-video-frame</v-icon>
+                  <span>LSB ve snímku videa</span>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text class="pa-4">
+                  <p class="text-body-1">
+                    <strong>Popis:</strong> Zpráva je ukryta do jednoho vybraného snímku videa pomocí LSB v obrazových datech. Po ukrytí lze snímek stáhnout a později použít k odhalení zprávy.
+                  </p>
+                  <p class="text-body-1">
+                    <strong>Omezení:</strong> Kapacita je omezena velikostí snímku a použitou kompresí. U některých video formátů může dojít ke ztrátě dat při exportu nebo opětovném nahrání.
+                  </p>
+                  <p class="text-body-1">
+                    <strong>Doporučení:</strong> Používejte videa s minimální kompresí (např. MP4 s vysokým bitrate) a pamatujte si číslo snímku, do kterého byla zpráva ukryta.
+                  </p>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+          </v-card-text>
+        </v-card>
+
+        <!-- Zvuková steganografie -->
+        <v-card class="mb-8 feature-card elevation-2" rounded="lg">
+          <div class="feature-header primary">
+            <v-icon size="large" class="feature-icon">mdi-volume-high</v-icon>
+            <h2 class="text-h5 font-weight-medium">Zvuková steganografie</h2>
+          </div>
+          <v-card-text class="pa-5">
+            <p class="mb-3 text-body-1">
+              Zvuková steganografie umožňuje ukrývat zprávy v audio souborech pomocí manipulace s nejméně významnými bity (LSB) v digitálním zvuku. Změny jsou pro lidské ucho prakticky neslyšitelné, ale kapacita je omezená.
+            </p>
+            <v-alert color="warning" class="mb-4" density="compact" variant="tonal" border="start">
+              <p class="text-body-1 mb-0">
+                <strong>Upozornění:</strong> Nejlepších výsledků dosáhnete s nekomprimovanými WAV soubory. Pokud stáhnete audio s ukrytou zprávou a znovu jej nahrajete (zejména ve formátu MP3), může být zpráva ztracena kvůli kompresi. U krátkých nebo silně komprimovaných nahrávek nemusí být možné zprávu úspěšně ukrýt ani odkrýt.
+              </p>
+            </v-alert>
+            <h3 class="text-h6 mt-5 mb-3 section-title">Použitá metoda</h3>
             <v-expansion-panels variant="accordion" class="custom-panels">
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="info" size="small" class="mr-2">mdi-message-text-outline</v-icon>
-                  <span>Skrývání textu v audio souborech</span>
+                  <span>LSB v audio (skrytí textu)</span>
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Ukrývá textové zprávy do audio souborů (podporovány jsou především formáty WAV a MP3).
+                    <strong>Popis:</strong> Zpráva je zakódována do nejméně významných bitů audio vzorků v jednom kanálu. Změny jsou neslyšitelné, ale kapacita je omezená délkou a kvalitou nahrávky.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Proces:</strong>
-                    Zpráva je zakódována do nejméně významných bitů audio vzorků, což způsobuje minimální slyšitelné změny.
+                    <strong>Omezení:</strong> Podporovány jsou především WAV soubory. U MP3 a jiných ztrátových formátů je vysoké riziko ztráty zprávy.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Kapacita:</strong>
-                    Závisí na délce audio souboru a vzorkovací frekvenci. Aplikace zobrazuje maximální dostupnou kapacitu.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Kompatibilita:</strong>
-                    Nejlépe funguje s nekomprimovanými WAV soubory. U MP3 může dojít ke ztrátě dat při opětovném uložení kvůli kompresi.
-                  </p>
-                </v-expansion-panel-text>
-              </v-expansion-panel>
-
-              <v-expansion-panel>
-                <v-expansion-panel-title class="method-title">
-                  <v-icon color="info" size="small" class="mr-2">mdi-play-circle</v-icon>
-                  <span>Přehrávání a kontrola</span>
-                </v-expansion-panel-title>
-                <v-expansion-panel-text class="pa-4">
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Po ukrytí dat nabízí aplikace možnost přehrát výsledný zvukový soubor přímo v prohlížeči.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Funkce:</strong>
-                    Můžete přímo odkrýt zprávu z aktuálně vygenerovaného audia bez nutnosti ukládat a znovu nahrávat soubor.
+                    <strong>Doporučení:</strong> Pro maximální spolehlivost používejte nekomprimované WAV soubory a delší nahrávky.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
+          </v-card-text>
+        </v-card>
 
-            <!-- Šifrování - upravené expanzní panely -->
+        <!-- Šifrování -->
+        <v-card class="mb-8 feature-card elevation-2" rounded="lg">
+          <div class="feature-header primary">
+            <v-icon size="large" class="feature-icon">mdi-shield-lock</v-icon>
+            <h2 class="text-h5 font-weight-medium">Šifrování</h2>
+          </div>
+          <v-card-text class="pa-5">
+            <p class="mb-3 text-body-1">
+              Pro zvýšení bezpečnosti lze ukryté zprávy (v textu a obrázcích) šifrovat pomocí moderních algoritmů AES. Šifrování zajišťuje, že i při odhalení skryté zprávy nebude její obsah čitelný bez znalosti hesla.
+            </p>
+            <h3 class="text-h6 mt-5 mb-3 section-title">Dostupné algoritmy</h3>
             <v-expansion-panels variant="accordion" class="custom-panels">
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
@@ -370,20 +352,13 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Symetrická bloková šifra s klíčem délky 128 bitů.
+                    <strong>Popis:</strong> Symetrická bloková šifra s klíčem délky 128 bitů. Nabízí vysokou úroveň zabezpečení a rychlost.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Bezpečnost:</strong>
-                    Velmi vysoká úroveň zabezpečení, prakticky neprolomitelná při správném použití.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Výkon:</strong>
-                    Rychlejší než AES-256, dostatečně bezpečná pro většinu běžných aplikací.
+                    <strong>Doporučení:</strong> Vhodná pro běžné použití, kde je důležitá rychlost i bezpečnost.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
-
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="purple" size="small" class="mr-2">mdi-shield-lock-outline</v-icon>
@@ -391,33 +366,56 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Popis:</strong>
-                    Symetrická bloková šifra s klíčem délky 256 bitů.
+                    <strong>Popis:</strong> Symetrická bloková šifra s klíčem délky 256 bitů. Poskytuje nejvyšší úroveň zabezpečení, vhodná pro citlivá data a dlouhodobou ochranu.
                   </p>
                   <p class="text-body-1">
-                    <strong class="feature-highlight">Bezpečnost:</strong>
-                    Nejvyšší úroveň zabezpečení, používaná pro kriticky citlivé informace.
-                  </p>
-                  <p class="text-body-1">
-                    <strong class="feature-highlight">Použití:</strong>
-                    Vhodná pro data vyžadující dlouhodobou ochranu nebo mimořádně citlivý obsah.
+                    <strong>Doporučení:</strong> Používejte pro data vyžadující maximální bezpečnost (např. osobní údaje, důvěrné informace).
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>
             </v-expansion-panels>
-
-            <v-alert density="compact" type="warning" variant="tonal" class="mt-4">
-              <strong>Důležité upozornění:</strong>
-              Po zašifrování dat heslem je toto heslo
-              <strong>nezbytné</strong>
-              pro jejich pozdější odkrytí. Pokud heslo zapomenete, nebude možné data obnovit!
+            <v-alert density="compact" type="info" variant="tonal" class="mt-4">
+              <strong>Poznámka:</strong> Šifrování je volitelné a dostupné pouze pro textovou a obrazovou steganografii.
             </v-alert>
+          </v-card-text>
+        </v-card>
+
+        <!-- Obecné varování a doporučení -->
+        <v-card class="mb-8 feature-card elevation-2" rounded="lg">
+          <div class="feature-header primary">
+            <v-icon size="large" class="feature-icon">mdi-alert-decagram</v-icon>
+            <h2 class="text-h5 font-weight-medium">Obecná doporučení a varování</h2>
+          </div>
+          <v-card-text class="pa-5">
+            <ul class="feature-list mb-3">
+              <li>
+                <v-icon color="warning" size="small" class="mr-2">mdi-alert</v-icon>
+                <strong>Testujte výsledky:</strong> Po ukrytí zprávy vždy ověřte, že ji lze úspěšně odkrýt. U některých formátů (audio, video) může dojít ke ztrátě dat při exportu nebo opětovném nahrání.
+              </li>
+              <li>
+                <v-icon color="warning" size="small" class="mr-2">mdi-alert</v-icon>
+                <strong>Limity kapacity:</strong> Každá metoda má omezenou kapacitu. Pokud je zpráva příliš dlouhá, nemusí být možné ji ukrýt.
+              </li>
+              <li>
+                <v-icon color="warning" size="small" class="mr-2">mdi-alert</v-icon>
+                <strong>Bezpečnost:</strong> Steganografie sama o sobě nezaručuje bezpečnost obsahu. Pro citlivé informace vždy používejte šifrování.
+              </li>
+              <li>
+                <v-icon color="warning" size="small" class="mr-2">mdi-alert</v-icon>
+                <strong>Vhodné použití:</strong> Pro nejlepší výsledky používejte kvalitní, nekomprimované soubory (WAV, PNG, video s vysokým bitrate).
+              </li>
+              <li>
+                <v-icon color="warning" size="small" class="mr-2">mdi-alert</v-icon>
+                <strong>Kompatibilita znaků:</strong> Pokud zadáváte speciální znaky (české znaky, diakritika), ověřte, že je metoda podporuje.
+              </li>
+            </ul>
+       
           </v-card-text>
         </v-card>
 
         <!-- Tlačítko zpět na hlavní stránku -->
         <div class="text-center mt-8 mb-6">
-          <v-btn to="/" size="large" color="primary" variant="elevated" rounded="pill" class="px-6 py-2">
+          <v-btn to="/" size="large" color="primary" variant="outlined"  class="px-6 py-2">
             <v-icon class="mr-2">mdi-arrow-left</v-icon>
             Zpět na hlavní stránku
           </v-btn>
@@ -461,16 +459,13 @@
 
   /* Krásné karty s barevnými hlavičkami */
   .feature-card {
-    border: none;
-    overflow: hidden;
-    transition:
-      transform 0.3s ease,
-      box-shadow 0.3s ease;
+    transition: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
 
   .feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: none !important;
   }
 
   .feature-header {

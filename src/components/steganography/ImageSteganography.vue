@@ -557,25 +557,19 @@
 
   // Obsluha výběru steganografického obrázku pro odkrývání
   function onStegoImageSelected() {
-    console.log('Starting onStegoImageSelected');
+    if (!stegoFile.value) {
+      stegoImagePreview.value = '';
+      return;
+    }
 
     isEncryptedContent.value = false;
     decryptionPassword.value = '';
     decryptionType.value = 'none'; // Reset
 
-    if (!stegoFile.value) {
-      console.log('No stego file selected, clearing preview');
-      stegoImagePreview.value = '';
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = async (e) => {
-      console.log('Stego file loaded');
       const img = new Image();
       img.onload = async () => {
-        console.log('Stego image loaded, dimensions:', { width: img.width, height: img.height });
-
         if (!stegoCanvas.value) {
           console.warn('stegoCanvas ref is null, cannot display preview');
           return;
@@ -595,7 +589,6 @@
         stegoImagePreview.value = e.target.result;
 
         // Create header detection canvas
-        console.log('Creating header detection canvas');
         const headerDetectionCanvas = document.createElement('canvas');
         headerDetectionCanvas.width = Math.min(200, img.width);
         headerDetectionCanvas.height = Math.min(200, img.height);
@@ -608,47 +601,22 @@
         headerCtx.drawImage(img, 0, 0, headerDetectionCanvas.width, headerDetectionCanvas.height);
 
         try {
-          console.log('Attempting to peek at initial text for header detection');
           const initialPeekText = await peekInitialTextFromImage(headerDetectionCanvas, revealBitsPerChannel.value, 50);
-
-          console.log('Peek results:', {
-            initialTextLength: initialPeekText?.length || 0,
-            initialTextStart: initialPeekText?.substring(0, 30) || '',
-            startsWithEncrypted: initialPeekText?.startsWith('ENCRYPTED:') || false,
-            startsWithText: initialPeekText?.startsWith('TEXT:') || false
-          });
 
           if (initialPeekText && initialPeekText.startsWith('ENCRYPTED:')) {
             const parts = initialPeekText.substring(10).split(':');
-            console.log('ENCRYPTED header detected, parts:', parts);
 
             if (parts.length >= 1) {
               const encTypeHeader = parts[0]; // Should be AES-128 or AES-256
               const detectedEncType = encTypeHeader === 'AES-128' ? 'aes128' : encTypeHeader === 'AES-256' ? 'aes256' : '';
 
-              console.log('Parsed encryption type:', {
-                encTypeHeader,
-                detectedEncType
-              });
-
               if (detectedEncType) {
                 isEncryptedContent.value = true;
                 decryptionType.value = detectedEncType;
-                console.log('Updated UI state for encrypted content:', {
-                  isEncryptedContent: isEncryptedContent.value,
-                  decryptionType: decryptionType.value
-                });
-
-                emit('show-message', {
-                  message: `Detekován zašifrovaný obsah (${detectedEncType.toUpperCase()}). Prosím zadejte heslo pro dešifrování.`,
-                  type: 'info'
-                });
               } else {
                 console.warn('Could not determine encryption type from header:', initialPeekText);
               }
             }
-          } else if (initialPeekText) {
-            console.log('Content does not appear to be encrypted (no ENCRYPTED: header)');
           }
         } catch (err) {
           console.warn('Error during encryption header detection:', err);
@@ -673,13 +641,6 @@
 
   // Zpracování ukrytí dat v obrázku
   async function performHideInImage() {
-    // Existing checks and validations
-    console.log('Starting performHideInImage', {
-      hideMode: hideMode.value,
-      encryptionType: encryptionType.value,
-      bitsPerChannel: bitsPerChannel.value
-    });
-
     if (!carrierFile.value) {
       emit('show-message', { message: 'Prosím, vyberte nosný obrázek.', type: 'error' });
       return;
@@ -715,7 +676,6 @@
 
       if (hideMode.value === 'text') {
         let textToHide = secretText.value;
-        console.log('Original text to hide:', textToHide.substring(0, 100) + (textToHide.length > 100 ? '...' : ''));
 
         if (encryptionType.value !== 'none') {
           if (!encryptionPassword.value) {
@@ -729,30 +689,9 @@
           let key;
           let aesModeStr = encryptionType.value === 'aes128' ? 'AES-128' : 'AES-256';
 
-          console.log('Encrypting with:', {
-            mode: aesModeStr,
-            passwordLength: password.length,
-            password: password // Only log in development
-          });
-
-          // IMPORTANT: Use the raw password directly
-          // CryptoJS AES will handle proper key derivation internally
           const encrypted = CryptoJS.AES.encrypt(plainText, password);
           textToHide = `ENCRYPTED:${aesModeStr}:${encrypted.toString()}`;
-
-          console.log('Encrypted text format:', {
-            prefix: 'ENCRYPTED',
-            mode: aesModeStr,
-            encryptedTextLength: encrypted.toString().length,
-            fullTextStart: textToHide.substring(0, 100) + '...'
-          });
         }
-
-        console.log('Final text being hidden (first 40 chars):', textToHide.substring(0, 40) + '...');
-        console.log('Text header check:', {
-          startsWithEncrypted: textToHide.startsWith('ENCRYPTED:'),
-          startsWithText: textToHide.startsWith('TEXT:')
-        });
 
         stegoImageData = await hideTextInImage(originalCanvas, textToHide, bitsPerChannel.value);
       } else {
@@ -823,8 +762,6 @@
         enhancedCtx.clearRect(0, 0, enhancedVisCanvas.value.width, enhancedVisCanvas.value.height);
         enhancedCtx.drawImage(tempEnhancedCanvas, 0, 0, enhancedVisCanvas.value.width, enhancedVisCanvas.value.height);
       }
-
-      console.log('Steganography successful, image data created');
 
       // Uložení výsledného obrázku
       stegoImageUrl.value = resultCanvas.toDataURL('image/png');
@@ -930,7 +867,6 @@
       });
       scrollTo('.result-alert');
     } finally {
-      console.log('Reveal process completed');
       isProcessing.value = false;
     }
 
