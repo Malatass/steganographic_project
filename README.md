@@ -1,60 +1,76 @@
-# vue-steganography-app
+# Steganography Application
 
-Tento projekt je moderní aplikace pro steganografii, která umožňuje skrývat a odkrývat informace v různých typech médií: text, obrázky, audio a video.
+This project is a modern steganography application developed as a school assignment for the ENC-K - Kryptologie course at Mendel University in Brno. The application allows users to hide and reveal information in various types of media: text, images, audio, and video.
 
-## Hlavní funkce
+## About the Project
 
-- **Výběr steganografické metody**: Uživatel si může zvolit z několika metod pro každý typ média.
-- **Podpora šifrování**: Možnost šifrovat ukrytou zprávu pomocí AES-128 nebo AES-256 (kromě audia a videa).
-- **Stavové zprávy a vizualizace**: Aplikace zobrazuje grafické výstupy, náhledy a upozornění na úspěch či chyby.
-- **Možnost stahování výsledků**: Výsledné obrázky, audio a video snímky lze stáhnout s vlastním názvem.
-- **Import a práce se schránkou**: Podpora vkládání a importu textu/souborů ze schránky nebo souborového systému.
+This application was created as a fulfillment of the course requirement to implement a non-trivial application using steganographic methods in a programming language suitable for the task. While JavaScript might not be the most efficient language for implementing steganographic algorithms (compared to languages like Python), it was chosen to explore a different approach than what is commonly used by others in the course.
 
-## Důležitá omezení a upozornění
+## Main Features
 
-- **Podpora UTF-8 a českých znaků**: Některé metody (zejména textové) plně podporují UTF-8 a české znaky, jiné (např. audio, některé obrazové) pouze ASCII. Pokud zadáte české znaky, zobrazí se upozornění.
-- **Automatická změna velikosti obrázku**: Při skrývání obrázku v obrázku se tajný obrázek automaticky zmenší, pokud je příliš velký. Tato funkce nemusí být vždy 100% spolehlivá a může dojít ke ztrátě detailů.
-- **Audio a video**: Pokud stáhnete audio s ukrytou zprávou a znovu jej nahrajete, může být zpráva ztracena kvůli kompresi (zejména u MP3). Pro nejlepší výsledky používejte WAV. U videa a audia s nízkou kvalitou nebo vysokou kompresí nemusí být možné zprávu úspěšně ukrýt ani odkrýt.
+- **Multiple Steganographic Methods**: The application supports various methods for each media type:
 
-## Technologie
+  - **Text**: Delimiters, Base64 + Delimiters, White Spaces, Zero-width characters, Bacon cipher, Multi-tag Bacon cipher, Similar letters, Czech conjunctions, Word spacing
+  - **Images**: LSB (Least Significant Bit) steganography with customizable bit depth
+  - **Audio**: LSB audio steganography in WAV files
+  - **Video**: Frame-based steganography with individual frame extraction and processing
 
-- **Vue 3** – moderní framework pro tvorbu uživatelských rozhraní
-- **Vite** – rychlý vývojový a buildovací nástroj
-- **Vuetify** – komponentová knihovna pro moderní vzhled
+- **Encryption Support**: Option to encrypt hidden messages using AES-128 or AES-256 (except for audio and video)
+- **Status Messages and Visualizations**: The application displays graphical outputs, previews, and success or error notifications
+- **Result Downloads**: Resulting images, audio, and video frames can be downloaded with custom names
+- **Clipboard and Import Support**: Support for pasting and importing text/files from clipboard or file system
 
-## Instalace
+## Important Limitations and Warnings
 
-1. Klonujte repozitář:
+- **UTF-8 and Czech Character Support**: Some methods (especially text-based) fully support UTF-8 and Czech characters, while others (e.g., audio, some image methods) only support ASCII. A warning is displayed when entering Czech characters.
+- **Automatic Image Resizing**: When hiding an image within another image, the secret image is automatically resized if it's too large. This feature may not always be 100% reliable and could result in loss of detail.
+- **Audio and Video**: If you download audio with a hidden message and upload it again, the message may be lost due to compression (especially with MP3). For best results, use WAV. With low-quality or highly compressed video and audio, it may not be possible to successfully hide or reveal a message.
+
+## Technologies
+
+- **Vue 3** – modern framework for building user interfaces
+- **Vite** – fast development and build tool
+- **Vuetify** – component library for modern design
+
+## Installation
+
+1. Clone the repository:
    ```
    git clone <repo-url>
    ```
-2. Přejděte do adresáře projektu:
+2. Navigate to the project directory:
    ```
-   cd vue-steganography-app
+   cd steganographic_project
    ```
-3. Nainstalujte závislosti:
+3. Install dependencies:
    ```
    npm install
    ```
 
-## Spuštění aplikace
+## Running the Application
 
-Pro spuštění v režimu vývoje:
+To run in development mode:
+
 ```
 npm run dev
 ```
 
-## Build pro produkci
+## Production Build
 
-Pro vytvoření produkční verze:
+To create a production build:
+
 ```
 npm run build
 ```
 
-## Přispívání
+## Contributing
 
-Návrhy na vylepšení nebo opravy chyb jsou vítány formou pull requestů.
+Suggestions for improvements or bug fixes are welcome in the form of pull requests.
 
-## Licence
+## License
 
 MIT
+
+## Acknowledgements
+
+This project was developed as part of the ENC-K - Kryptologie course at Mendel University in Brno. Special thanks to the course instructors for their guidance and support.
