@@ -276,7 +276,7 @@
               <v-expansion-panel>
                 <v-expansion-panel-title class="method-title">
                   <v-icon color="success" size="small" class="mr-2">mdi-image-multiple</v-icon>
-                  <span>Skrývání obrázku v obrázku</span>
+                  <span>Skrývání obrázku v obrázku (LSB)</span>
                 </v-expansion-panel-title>
                 <v-expansion-panel-text class="pa-4">
                   <p class="text-body-1">
@@ -287,6 +287,38 @@
                   <p class="text-body-1">
                     <strong>Omezení:</strong>
                     Při automatické změně velikosti může dojít ke ztrátě detailů tajného obrázku.
+                  </p>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+              <v-expansion-panel>
+                <v-expansion-panel-title class="method-title">
+                  <v-icon color="success" size="small" class="mr-2">mdi-arrow-expand-all</v-icon>
+                  <span>MSB-in-LSB (n MSB do n LSB)</span>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text class="pa-4">
+                  <p class="text-body-1">
+                    <strong>Popis:</strong>
+                    Tato metoda ukládá n nejvýznamnějších bitů každého kanálu tajného obrázku do n nejméně významných bitů nosného obrázku. Výsledkem je vizuální aproximace tajného obrázku, která je dobře viditelná zejména u ilustrací nebo schémat.
+                  </p>
+                  <p class="text-body-1">
+                    <strong>Omezení:</strong>
+                    Obrázky musí mít stejnou velikost. Výsledek není vhodný pro fotografie, ale je velmi efektivní pro jednoduchou grafiku.
+                  </p>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+              <v-expansion-panel>
+                <v-expansion-panel-title class="method-title">
+                  <v-icon color="success" size="small" class="mr-2">mdi-palette-outline</v-icon>
+                  <span>Barevná podobnost (Color Similarity)</span>
+                </v-expansion-panel-title>
+                <v-expansion-panel-text class="pa-4">
+                  <p class="text-body-1">
+                    <strong>Popis:</strong>
+                    Metoda využívá změnu barvy každého pixelu na nejbližší možnou hodnotu, která kóduje požadované bity tajného obrázku. Výsledkem je obrázek, který je vizuálně téměř nerozeznatelný od originálu, zejména u šedotónových obrázků.
+                  </p>
+                  <p class="text-body-1">
+                    <strong>Omezení:</strong>
+                    Nejlépe funguje pro šedotónové obrázky, ale lze použít i pro barevné. Kapacita je omezena počtem bitů na kanál.
                   </p>
                 </v-expansion-panel-text>
               </v-expansion-panel>

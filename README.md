@@ -11,7 +11,7 @@ Tato aplikace byla vytvořena jako splnění požadavku kurzu implementovat netr
 - **Různé steganografické metody**: Aplikace podporuje různé metody pro každý typ média:
 
   - **Text**: Oddělovače, Base64 + Oddělovače, Bílé znaky, Znaky s nulovou šířkou, Baconova šifra, Multi-tag Baconova šifra, Podobná písmena, České spojky, Rozestupy slov
-  - **Obrázky**: LSB (Least Significant Bit) steganografie s nastavitelnou bitovou hloubkou
+  - **Obrázky**: LSB (Least Significant Bit) steganografie s nastavitelnou bitovou hloubkou, MSB-in-LSB (ukládání nejvýznamnějších bitů tajného obrázku do nejméně významných bitů nosiče), Barevná podobnost (Color Similarity - změna barvy na nejbližší možnou hodnotu, která kóduje požadované bity)
   - **Audio**: LSB audio steganografie ve WAV souborech
   - **Video**: Steganografie založená na snímcích s extrakcí a zpracováním jednotlivých snímků
 
@@ -25,6 +25,8 @@ Tato aplikace byla vytvořena jako splnění požadavku kurzu implementovat netr
 - **Podpora UTF-8 a českých znaků**: Některé metody (zejména textové) plně podporují UTF-8 a české znaky, zatímco jiné (např. audio, některé obrazové metody) podporují pouze ASCII. Při zadávání českých znaků se zobrazí upozornění.
 - **Automatická změna velikosti obrázku**: Při skrývání obrázku v jiném obrázku je tajný obrázek automaticky zmenšen, pokud je příliš velký. Tato funkce nemusí být vždy 100% spolehlivá a může dojít ke ztrátě detailů.
 - **Audio a video**: Pokud stáhnete audio se skrytou zprávou a znovu jej nahrajete, zpráva může být ztracena kvůli kompresi (zejména u MP3). Pro nejlepší výsledky používejte WAV. U nízkokvalitního nebo vysoce komprimovaného videa a audia nemusí být možné úspěšně skrýt nebo odkrýt zprávu.
+- **MSB-in-LSB**: Obrázky musí mít stejnou velikost. Výsledek je vizuální aproximace tajného obrázku, vhodné pro ilustrace nebo schémata.
+- **Barevná podobnost (Color Similarity)**: Nejlépe funguje pro šedotónové obrázky, ale lze použít i pro barevné. Výsledek je vizuálně velmi nenápadný, ale kapacita je omezena počtem bitů na kanál.
 
 ## Technologie
 

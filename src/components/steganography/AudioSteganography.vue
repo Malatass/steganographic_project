@@ -68,9 +68,9 @@
                 :maxlength="carrierAudioInfo ? Math.floor((carrierAudioInfo.sampleRate * carrierAudioInfo.duration - 16) / 8) : 0"
                 counter
               ></v-textarea>
-              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
+              <v-alert v-if="hasNonLatinChars(secretMessage)" type="info" variant="tonal" density="comfortable" class="mt-2">
                 <strong>Poznámka:</strong>
-                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+                Váš text obsahuje české znaky (ěščřžýáíéúů). Audio metoda podporuje rozšířené znaky, ale může nastat chybovost.
               </v-alert>
             </div>
 
