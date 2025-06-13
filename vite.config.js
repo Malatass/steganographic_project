@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-  base: '/~xfisa/ENC-K/',
+  base: '/steganographic_project',
   plugins: [vue()],
   resolve: {
     alias: {

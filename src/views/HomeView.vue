@@ -24,7 +24,7 @@
             <div class="mt-8 github-badge">
               <v-tooltip location="top">
                 <template v-slot:activator="{ props }">
-                  <a href="#" target="_blank" v-bind="props">
+                  <a href="https://github.com/Malatass/steganographic_project" target="_blank" v-bind="props">
                     <v-chip color="grey-darken-3" variant="elevated" class="px-2 py-3" prepend-icon="mdi-source-repository">
                       <span class="text-caption mr-1">Zdrojový kód:</span>
                       <strong class="text-white">GitHub</strong>

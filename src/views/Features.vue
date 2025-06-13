@@ -560,7 +560,16 @@
                 </v-avatar>
                 <h3 class="text-h6 mb-2">Zdrojový kód</h3>
                 <p class="text-body-2 mb-4">Kompletní zdrojový kód aplikace na GitHubu</p>
-                <v-btn color="indigo" variant="outlined" class="px-6" href="#" target="_blank" prepend-icon="mdi-github">Zobrazit kód</v-btn>
+                <v-btn
+                  color="indigo"
+                  variant="outlined"
+                  class="px-6"
+                  href="https://github.com/Malatass/steganographic_project"
+                  target="_blank"
+                  prepend-icon="mdi-github"
+                >
+                  Zobrazit kód
+                </v-btn>
               </v-card>
             </div>
           </v-card-text>
