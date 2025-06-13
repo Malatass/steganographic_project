@@ -14,9 +14,25 @@
               <v-btn to="/features" variant="tonal" color="primary" class="my-2" prepend-icon="mdi-information-outline">Přehled funkcí aplikace</v-btn>
 
               <!-- Tlačítka odkazů na GitHub a Akela -->
-              <v-btn href="#" target="_blank" variant="outlined" color="primary" class="ml-3 my-2" prepend-icon="mdi-github">Verze na GitHub Pages</v-btn>
+              <v-btn
+                href="https://malatass.github.io/steganographic_project/"
+                target="_blank"
+                variant="outlined"
+                color="primary"
+                class="ml-3 my-2"
+                prepend-icon="mdi-github"
+              >
+                Verze na GitHub Pages
+              </v-btn>
 
-              <v-btn href="#" target="_blank" variant="outlined" color="amber-darken-2" class="ml-3 my-2" prepend-icon="mdi-school">
+              <v-btn
+                href="https://akela.mendelu.cz/~xfisa/ENC-K/"
+                target="_blank"
+                variant="outlined"
+                color="amber-darken-2"
+                class="ml-3 my-2"
+                prepend-icon="mdi-school"
+              >
                 Verze na serveru Akela
               </v-btn>
             </div>

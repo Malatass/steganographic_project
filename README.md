@@ -52,8 +52,8 @@ Tato aplikace byla vytvořena jako splnění požadavku kurzu implementovat netr
 Aplikace je dostupná online v následujících prostředích:
 
 - **GitHub Pages** - Veřejně dostupná verze aplikace https://github.com/Malatass/steganographic_project
-- **Server Akela** - Verze běžící na MENDELU serveru [odkaz bude doplněn]
-- **Zdrojový kód** - GitHub repozitář s kompletním kódem [odkaz bude doplněn]
+- **Server Akela** - Verze běžící na MENDELU serveru https://akela.mendelu.cz/~xfisa/ENC-K/
+- **Zdrojový kód** - GitHub repozitář s kompletním kódem https://malatass.github.io/steganographic_project/
 
 ## Spuštění aplikace
 

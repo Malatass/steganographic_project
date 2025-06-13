@@ -542,7 +542,16 @@
                 </v-avatar>
                 <h3 class="text-h6 mb-2">GitHub Pages</h3>
                 <p class="text-body-2 mb-4">Veřejně přístupná verze aplikace hostovaná na GitHub Pages</p>
-                <v-btn color="primary" variant="outlined" class="px-6" href="#" target="_blank" prepend-icon="mdi-open-in-new">Otevřít aplikaci</v-btn>
+                <v-btn
+                  color="primary"
+                  variant="outlined"
+                  class="px-6"
+                  href="https://malatass.github.io/steganographic_project/"
+                  target="_blank"
+                  prepend-icon="mdi-open-in-new"
+                >
+                  Otevřít aplikaci
+                </v-btn>
               </v-card>
 
               <v-card width="250" class="environment-card pa-4 text-center elevation-2" rounded="lg">
@@ -551,7 +560,16 @@
                 </v-avatar>
                 <h3 class="text-h6 mb-2">Server Akela</h3>
                 <p class="text-body-2 mb-4">Verze aplikace hostovaná na školním serveru Mendelu</p>
-                <v-btn color="amber-darken-2" variant="outlined" class="px-6" href="#" target="_blank" prepend-icon="mdi-open-in-new">Otevřít na Akela</v-btn>
+                <v-btn
+                  color="amber-darken-2"
+                  variant="outlined"
+                  class="px-6"
+                  href="https://akela.mendelu.cz/~xfisa/ENC-K/"
+                  target="_blank"
+                  prepend-icon="mdi-open-in-new"
+                >
+                  Otevřít na Akela
+                </v-btn>
               </v-card>
 
               <v-card width="250" class="environment-card pa-4 text-center elevation-2" rounded="lg">
