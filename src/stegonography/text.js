@@ -104,10 +104,10 @@ function deobfuscateBase64(obfuscatedString) {
  */
 function hideWithInvisibleChars(originalText, secretMessage) {
   // Konverze tajné zprávy do binární podoby
-  // Add end marker
+  // Přidání koncové značky
   const messageWithMarker = secretMessage + '§';
 
-  // Encode as before with the marker included
+  // Kódování jako předtím s přidanou značkou
   const encoder = new TextEncoder();
   const binaryMessage = Array.from(encoder.encode(messageWithMarker))
     .map((byte) => byte.toString(2).padStart(8, '0'))
@@ -199,7 +199,7 @@ function hideWithMultiTagBacon(originalText, secretMessage) {
   // Konverze tajné zprávy do binární podoby
   const messageWithMarker = secretMessage + '§';
 
-  // Convert to binary
+  // Převod na binární podobu
   const binaryMessage = Array.from(messageWithMarker)
     .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
     .join('');
@@ -279,7 +279,7 @@ function revealWithMultiTagBacon(stegText) {
     const byte = binaryMessage.substr(i, 8);
     if (byte.length === 8) {
       const char = String.fromCharCode(parseInt(byte, 2));
-      if (char === '§') break; // Stop at end marker
+      if (char === '§') break; // Zastavit při koncové značce
       result += char;
     }
   }
@@ -461,18 +461,18 @@ function revealWithBaconCipher(stegText) {
     }
   }
 
-  // First 5 characters represent the message length
+  // První 5 znaků reprezentuje délku zprávy
   if (baconCode.length < 5) return '';
 
-  // Extract message length
+  // Extrahujeme délku zprávy
   const lengthCode = baconCode.substring(0, 5);
   const messageLength = parseInt(lengthCode.replace(/A/g, '0').replace(/B/g, '1'), 2);
 
-  // Skip the length indicator and only decode the actual message length
+  // Přeskočíme indikátor délky a dekódujeme pouze skutečnou délku zprávy
   let result = '';
-  const requiredBaconLength = 5 * messageLength; // 5 bits per character
+  const requiredBaconLength = 5 * messageLength; // 5 bitů na znak
 
-  // Start after the length code and only process enough groups for the message
+  // Začneme za kódem délky a zpracujeme pouze dostatek skupin pro zprávu
   for (let i = 5; i < 5 + requiredBaconLength && i + 4 < baconCode.length; i += 5) {
     const code = baconCode.substr(i, 5);
     if (code.length === 5 && baconToChar[code]) {
@@ -490,7 +490,7 @@ function hideWithSimilarLetters(originalText, secretMessage) {
   // Převedení tajné zprávy na binární podobu
   const messageWithMarker = secretMessage + '§';
 
-  // Convert to binary
+  // Převod na binární podobu
   const binaryMessage = Array.from(messageWithMarker)
     .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
     .join('');
@@ -601,11 +601,11 @@ function revealWithSimilarLetters(stegText) {
     ř: 'ř'
   };
 
-  // Create a map of substituted characters to their original versions
+  // Vytvoříme mapu substituovaných znaků na jejich původní verze
   const reverseMap = {};
   for (const [original, substitution] of Object.entries(substitutionMap)) {
-    reverseMap[original] = original; // Original maps to itself
-    reverseMap[substitution] = original; // Substituted version maps to original
+    reverseMap[original] = original; // Originál mapuje na sebe
+    reverseMap[substitution] = original; // Substituovaná verze mapuje na originál
   }
 
   // Extrakce binární zprávy
@@ -613,19 +613,19 @@ function revealWithSimilarLetters(stegText) {
   let bitsProcessed = 0;
 
   for (const char of text) {
-    // Check if this character is either a substitutable character or a substitution
+    // Zkontrolujeme, zda je tento znak buď substituovatelný znak nebo substituce
     if (substitutionChars.includes(reverseMap[char]) || substitutionChars.includes(char)) {
       const originalChar = reverseMap[char] || char;
       const substitutedChar = substitutionMap[originalChar];
 
-      // If the character in text is the substituted version, then it's a '1' bit
+      // Pokud je znak v textu substituovaná verze, pak je to bit '1'
       binaryMessage += char === substitutedChar ? '1' : '0';
       bitsProcessed++;
 
-      // Stop if we've already processed enough bits for complete bytes
-      // This prevents trailing incomplete bytes
+      // Zastavíme, pokud jsme již zpracovali dostatek bitů pro kompletní bajty
+      // To zabraňuje neúplným koncovým bajtům
       if (bitsProcessed % 8 === 0) {
-        // Check if we have the end marker in the current complete set of bytes
+        // Zkontrolujeme, zda máme koncovou značku v aktuální kompletní sadě bajtů
         const currentBytes = [];
         for (let i = 0; i < binaryMessage.length; i += 8) {
           if (i + 8 <= binaryMessage.length) {
@@ -634,10 +634,10 @@ function revealWithSimilarLetters(stegText) {
           }
         }
 
-        // Check if we've found the end marker
+        // Zkontrolujeme, zda jsme našli koncovou značku
         const currentText = new TextDecoder().decode(new Uint8Array(currentBytes));
         if (currentText.includes('§')) {
-          // Found end marker, we can stop
+          // Nalezena koncová značka, můžeme zastavit
           break;
         }
       }
@@ -648,7 +648,7 @@ function revealWithSimilarLetters(stegText) {
   let bytes = [];
   for (let i = 0; i < binaryMessage.length; i += 8) {
     if (i + 8 <= binaryMessage.length) {
-      // Only process complete bytes
+      // Zpracováváme pouze kompletní bajty
       const byte = binaryMessage.substr(i, 8);
       bytes.push(parseInt(byte, 2));
     }
@@ -656,7 +656,7 @@ function revealWithSimilarLetters(stegText) {
 
   const decoded = new TextDecoder().decode(new Uint8Array(bytes));
 
-  // Remove end marker and anything after it
+  // Odstraníme koncovou značku a cokoli za ní
   const endMarkerIndex = decoded.indexOf('§');
   return endMarkerIndex !== -1 ? decoded.substring(0, endMarkerIndex) : decoded;
 }
@@ -665,15 +665,15 @@ function revealWithSimilarLetters(stegText) {
  * Česká metoda spojek - ukrývá bity ve volitelných čárkách před českými spojkami
  */
 function hideWithCzechConjunctions(originalText, secretMessage) {
-  // Convert message to binary
+  // Převod zprávy na binární podobu
   const messageWithMarker = secretMessage + '§';
 
-  // Convert to binary
+  // Převod na binární podobu
   const binaryMessage = Array.from(messageWithMarker)
     .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
     .join('');
 
-  // Find potential places for commas: before "a", "ale", "nebo", "či", "aby"...
+  // Najdeme potenciální místa pro čárky: před "a", "ale", "nebo", "či", "aby"...
   const czechConjunctionsRegex = /\b(\w+)( )(a|ale|nebo|či|aby|proto|přece|protože)\b/g;
   let matches = [...originalText.matchAll(czechConjunctionsRegex)];
 
@@ -684,34 +684,34 @@ function hideWithCzechConjunctions(originalText, secretMessage) {
   let result = originalText;
   let offset = 0;
 
-  // Add or skip commas based on binary data
+  // Přidáme nebo vynecháme čárky na základě binárních dat
   for (let i = 0; i < binaryMessage.length && i < matches.length; i++) {
     const match = matches[i];
     const insertPosition = match.index + match[1].length + offset;
 
     if (binaryMessage[i] === '1') {
-      // Insert comma for bit 1
+      // Vložíme čárku pro bit 1
       result = result.substring(0, insertPosition) + ',' + result.substring(insertPosition);
       offset += 1;
     }
-    // No comma for bit 0
+    // Žádná čárka pro bit 0
   }
 
   return result;
 }
 
 function revealFromCzechConjunctions(stegText) {
-  // Find all potential comma places before Czech conjunctions
+  // Najdeme všechna potenciální místa pro čárky před českými spojkami
   const czechCommaRegex = /\b(\w+)(,)?(a|ale|nebo|či|aby|proto|přece|protože)\b/g;
   let matches = [...stegText.matchAll(czechCommaRegex)];
 
-  // Extract binary data from presence/absence of commas
+  // Extrahujeme binární data z přítomnosti/absence čárek
   let binaryMessage = '';
   for (const match of matches) {
     binaryMessage += match[2] ? '1' : '0';
   }
 
-  // Convert binary back to text using UTF-8 aware conversion
+  // Převedeme binární data zpět na text pomocí konverze s podporou UTF-8
   let bytes = [];
   for (let i = 0; i < binaryMessage.length; i += 8) {
     const byte = binaryMessage.substr(i, 8);
@@ -722,7 +722,7 @@ function revealFromCzechConjunctions(stegText) {
 
   const decoded = new TextDecoder().decode(new Uint8Array(bytes));
 
-  // Remove end marker
+  // Odstranění koncové značky
   const endMarkerIndex = decoded.indexOf('§');
   return endMarkerIndex !== -1 ? decoded.substring(0, endMarkerIndex) : decoded;
 }

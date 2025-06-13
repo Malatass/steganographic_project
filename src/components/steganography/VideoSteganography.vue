@@ -6,7 +6,6 @@
     </v-tabs>
 
     <v-window v-model="activeTab">
-      <!-- Hide Tab -->
       <v-window-item value="hide">
         <v-card class="mb-8 pa-4" outlined>
           <v-card-title class="text-h5">Ukrýt zprávu do snímku videa</v-card-title>
@@ -129,15 +128,12 @@
         </v-card>
       </v-window-item>
 
-      <!-- Reveal Tab -->
       <v-window-item value="reveal">
         <v-card class="mb-8 pa-4" outlined>
           <v-card-title class="text-h5">Odkrýt zprávu ze snímku</v-card-title>
           <v-card-text>
-            <!-- Source selection tabs -->
             <div v-if="!useInMemoryFrame">
               <v-window v-model="revealSource">
-                <!-- Reveal from image -->
                 <v-window-item value="image">
                   <label>Vyberte obrázek s ukrytými daty:</label>
                   <v-file-input
@@ -153,7 +149,6 @@
                   ></v-file-input>
                 </v-window-item>
 
-                <!-- Reveal from video -->
                 <v-window-item value="video">
                   <v-file-input
                     v-model="stegoVideoFile"
@@ -244,24 +239,24 @@
   const activeTab = ref('hide');
   const isProcessing = ref(false);
   const useInMemoryFrame = ref(false);
-  const revealSource = ref('image'); // 'video' or 'image'
+  const revealSource = ref('image'); // 'video' nebo 'image'
 
-  // Video hide section
+  // Sekce pro ukrývání do videa
   const videoFile = ref(null);
   const videoInfo = ref(null);
   const frameIndex = ref(0);
   const secretMessage = ref('');
   const modifiedFrameUrl = ref('');
   const currentFrameIndex = ref(0);
-  const stegoFrameCanvas = ref(null); // Store the canvas with hidden data
+  const stegoFrameCanvas = ref(null); // Uložení plátna s ukrytými daty
 
-  // Video reveal section
+  // Sekce pro odkrývání z videa
   const stegoVideoFile = ref(null);
   const stegoImageFile = ref(null);
   const revealFrameIndex = ref(0);
   const revealedMessage = ref('');
 
-  // Video and image element refs (not displayed in UI)
+  // Reference na video a obrázek elementy (nejsou zobrazeny v UI)
   const videoElement = document.createElement('video');
   const stegoVideoElement = document.createElement('video');
   const stegoImageElement = document.createElement('img');
@@ -285,6 +280,7 @@
     emit('show-message', { message: '', type: 'info' });
   }
 
+  // Zpracování vybraného video souboru pro nosič
   function onVideoSelected() {
     if (!videoFile.value) {
       videoInfo.value = null;
@@ -300,7 +296,7 @@
         duration: videoElement.duration,
         width: videoElement.videoWidth,
         height: videoElement.videoHeight,
-        frameCount: Math.floor(videoElement.duration * 30) // Assuming 30fps
+        frameCount: Math.floor(videoElement.duration * 30) // Předpokládáme 30 snímků za sekundu
       };
       isProcessing.value = false;
       emit('show-message', { message: 'Video úspěšně načteno.', type: 'success' });
@@ -313,6 +309,7 @@
     };
   }
 
+  // Zpracování vybraného videa s ukrytými daty pro odkrytí
   function onStegoVideoSelected() {
     if (!stegoVideoFile.value) return;
 
@@ -329,6 +326,7 @@
     };
   }
 
+  // Zpracování vybraného obrázku s ukrytými daty pro odkrytí
   function onStegoImageSelected() {
     if (!stegoImageFile.value) return;
 
@@ -345,6 +343,7 @@
     };
   }
 
+  // Funkce pro ukrytí zprávy ve snímku videa
   async function hideMessageInVideo() {
     if (!videoFile.value || !secretMessage.value) {
       emit('show-message', { message: 'Vyberte video a zadejte zprávu.', type: 'error' });
@@ -358,7 +357,7 @@
       const result = await hideTextInVideoFrame(videoElement, secretMessage.value, parseInt(frameIndex.value), 1);
       modifiedFrameUrl.value = result.modifiedFrame;
       currentFrameIndex.value = result.frameIndex;
-      stegoFrameCanvas.value = result.frameCanvas; // Store canvas for later use
+      stegoFrameCanvas.value = result.frameCanvas; // Uložení plátna pro pozdější použití
 
       emit('show-message', { message: 'Zpráva byla úspěšně ukryta ve snímku videa.', type: 'success' });
     } catch (error) {
@@ -368,11 +367,12 @@
     }
   }
 
+  // Příprava snímku v paměti pro odkrytí
   function prepareFrameForReveal() {
     if (stegoFrameCanvas.value) {
       useInMemoryFrame.value = true;
-      activeTab.value = 'reveal'; // Switch to reveal tab
-      // Clear file inputs since we're using in-memory frame
+      activeTab.value = 'reveal'; // Přepnutí na záložku odkrytí
+      // Vyčištění vstupů souborů, protože používáme snímek v paměti
       stegoVideoFile.value = null;
       stegoImageFile.value = null;
       emit('show-message', { message: 'Připraveno k odkrytí zprávy z aktuálně vygenerovaného snímku.', type: 'info' });
@@ -381,11 +381,13 @@
     }
   }
 
+  // Vyčištění snímku v paměti
   function clearInMemoryFrame() {
     useInMemoryFrame.value = false;
     emit('show-message', { message: 'Režim snímku v paměti zrušen. Můžete nyní načíst video nebo obrázek.', type: 'info' });
   }
 
+  // Funkce pro odkrytí zprávy ze snímku videa nebo obrázku
   async function revealMessageFromVideo() {
     if (
       (!stegoVideoFile.value && !stegoImageFile.value && !useInMemoryFrame.value) ||
@@ -403,13 +405,13 @@
       let revealed;
 
       if (useInMemoryFrame.value && stegoFrameCanvas.value) {
-        // Reveal from in-memory canvas
+        // Odkrytí z plátna v paměti
         revealed = await revealTextFromVideoFrame(stegoFrameCanvas.value, 0, 1);
       } else if (revealSource.value === 'image' && stegoImageFile.value) {
-        // Reveal from image file
+        // Odkrytí ze souboru obrázku
         revealed = await revealTextFromVideoFrame(stegoImageElement, 0, 1);
       } else {
-        // Reveal from video file
+        // Odkrytí ze souboru videa
         revealed = await revealTextFromVideoFrame(stegoVideoElement, parseInt(revealFrameIndex.value), 1);
       }
 
@@ -423,11 +425,13 @@
     }
   }
 
+  // Otevření dialogu pro stažení
   function openDownloadDialog() {
     downloadFileName.value = `stego_frame_${currentFrameIndex.value}`;
     downloadDialog.value = true;
   }
 
+  // Stažení upraveného snímku s ukrytou zprávou
   function downloadModifiedFrame() {
     if (!modifiedFrameUrl.value) return;
     const link = document.createElement('a');
@@ -440,6 +444,7 @@
     emit('show-message', { message: 'Snímek byl úspěšně stažen.', type: 'success' });
   }
 
+  // Kopírování odkryté zprávy do schránky
   function copyRevealedMessage() {
     if (!revealedMessage.value) return;
 
@@ -453,6 +458,7 @@
       });
   }
 
+  // Stažení odkryté zprávy jako textového souboru
   function downloadRevealedMessage() {
     if (!revealedMessage.value) {
       emit('show-message', { message: 'Není k dispozici žádný text ke stažení.', type: 'error' });
@@ -471,16 +477,19 @@
     emit('show-message', { message: 'Odkrytý text byl úspěšně stažen.', type: 'success' });
   }
 
+  // Formátování délky videa
   function formatDuration(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
+  // Vyvolání dialogu pro výběr souboru s tajnou zprávou
   function triggerSecretMessageFileInput() {
     secretMessageFileInput.value.click();
   }
 
+  // Vložení textu ze schránky do pole pro tajnou zprávu
   async function pasteSecretFromClipboard() {
     try {
       const text = await navigator.clipboard.readText();
@@ -495,6 +504,7 @@
     }
   }
 
+  // Import tajné zprávy ze souboru
   function importSecretMessageFile(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -510,23 +520,24 @@
     event.target.value = '';
   }
 
+  // Kontrola, zda text obsahuje neanglické znaky
   function hasNonLatinChars(text) {
     if (!text) return false;
-    // Checks for any non-ASCII character (including Czech)
+    // Kontrola jakýchkoliv ne-ASCII znaků (včetně českých)
     return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
 
-  // Add watcher for tab changes and reset logic
+  // Sledování změn aktivní záložky a resetování stavu
   watch(activeTab, (newTab) => {
     if (newTab === 'hide') {
-      // Reset reveal section
+      // Reset sekce odkrývání
       revealedMessage.value = '';
       stegoVideoFile.value = null;
       stegoImageFile.value = null;
       revealFrameIndex.value = 0;
       useInMemoryFrame.value = false;
     } else {
-      // Reset hide section
+      // Reset sekce ukrývání
       secretMessage.value = '';
       videoFile.value = null;
       videoInfo.value = null;

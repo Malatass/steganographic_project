@@ -1,12 +1,13 @@
 <template>
   <div class="audio-steganography">
+    <!-- Záložky pro ukrytí/odkrytí zprávy -->
     <v-tabs v-model="activeTab" class="mb-6" color="primary">
       <v-tab value="hide">Ukrýt zprávu</v-tab>
       <v-tab value="reveal">Odkrýt zprávu</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
-      <!-- Hide Tab -->
+      <!-- Záložka pro ukrývání zprávy -->
       <v-window-item value="hide">
         <v-card class="mb-8 pa-4" outlined>
           <v-card-title class="text-h5">Ukrýt zprávu do audia</v-card-title>
@@ -24,6 +25,7 @@
               :disabled="isProcessing"
             ></v-file-input>
 
+            <!-- Informace o vybraném audio souboru -->
             <div v-if="carrierAudioInfo" class="mb-4 pa-3 border rounded">
               <p><strong>Informace o audiu:</strong></p>
               <p>Trvání: {{ carrierAudioInfo.duration.toFixed(2) }}s</p>
@@ -32,10 +34,12 @@
               <p>Maximální kapacita pro zprávu: {{ formatCapacity(carrierAudioInfo.capacity) }}</p>
             </div>
 
+            <!-- Varování o MP3 formátu -->
             <v-alert v-if="carrierAudioFile && carrierAudioFile.type === 'audio/mpeg'" type="warning" variant="tonal" class="mb-4">
               MP3 je ztrátový formát a může způsobit ztrátu ukrytých dat. Pro lepší výsledky doporučujeme použít formát WAV.
             </v-alert>
 
+            <!-- Vstup pro tajnou zprávu -->
             <div class="mb-4">
               <div class="d-flex justify-space-between align-center mb-1">
                 <label>Text k ukrytí</label>
@@ -52,6 +56,7 @@
                 <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
               </div>
 
+              <!-- Textové pole pro zprávu -->
               <v-textarea
                 v-model="secretMessage"
                 rows="3"
@@ -69,10 +74,12 @@
               </v-alert>
             </div>
 
+            <!-- Tlačítko pro ukrytí zprávy -->
             <v-btn color="secondary" @click="performHideInAudio" :disabled="!carrierAudioFile || !secretMessage || isProcessing" :loading="isProcessing">
               Ukrýt zprávu
             </v-btn>
 
+            <!-- Výsledek ukrytí - audio přehrávač -->
             <div v-if="stegoAudioUrl" class="mt-6">
               <h4 class="mb-2">Audio s ukrytou zprávou:</h4>
               <audio controls :src="stegoAudioUrl" class="w-100"></audio>
@@ -88,6 +95,7 @@
                 </v-btn>
               </div>
             </div>
+            <!-- Dialog pro stažení souboru -->
             <v-dialog v-model="downloadDialog" max-width="400">
               <v-card>
                 <v-card-title>Stáhnout soubor</v-card-title>
@@ -112,11 +120,12 @@
         </v-card>
       </v-window-item>
 
-      <!-- Reveal Tab -->
+      <!-- Záložka pro odkrývání zprávy -->
       <v-window-item value="reveal">
         <v-card class="mb-8 pa-4" outlined>
           <v-card-title class="text-h5">Odkrýt zprávu z audia</v-card-title>
           <v-card-text>
+            <!-- Pokud používáme audio v paměti z předchozího kroku -->
             <div v-if="useInMemoryAudio" class="mb-4 pa-3 border rounded">
               <p><strong>Používání audia v paměti</strong></p>
 
@@ -128,7 +137,8 @@
                 </div>
               </div>
             </div>
-            <label v-if="!useInMemoryAudio">Vyberte soubors ukrytou zprávou (WAV, MP3)</label>
+            <!-- Výběr audio souboru pro odkrytí -->
+            <label v-if="!useInMemoryAudio">Vyberte soubor s ukrytou zprávou (WAV, MP3)</label>
             <v-file-input
               v-if="!useInMemoryAudio"
               v-model="stegoAudioFileForReveal"
@@ -141,6 +151,7 @@
               @update:model-value="onStegoAudioForRevealSelected"
               :disabled="isProcessing"
             ></v-file-input>
+            <!-- Tlačítko pro odkrytí zprávy -->
             <v-btn
               color="secondary"
               @click="performRevealFromAudioFile"
@@ -150,6 +161,7 @@
               Odkrýt zprávu
             </v-btn>
 
+            <!-- Výsledek odkrytí -->
             <div v-if="revealedMessage" class="mt-6">
               <h4 class="mb-2">Odkrytá zpráva:</h4>
               <v-textarea v-model="revealedMessage" label="Odkrytý text" rows="5" auto-grow outlined readonly variant="outlined" class="mb-4"></v-textarea>
@@ -173,25 +185,25 @@
 
 <script setup>
   import { ref, computed, watch } from 'vue';
-  import { hideInAudio, revealFromAudio } from '../../stegonography/audio'; // Correct path
+  import { hideInAudio, revealFromAudio } from '../../stegonography/audio';
 
   const emit = defineEmits(['show-message']);
 
   const activeTab = ref('hide');
   const isProcessing = ref(false);
 
-  // Hide section
+  // Proměnné pro ukrývání zprávy
   const carrierAudioFile = ref(null);
   const carrierAudioBuffer = ref(null);
   const carrierAudioInfo = ref(null);
   const secretMessage = ref('');
-  const stegoAudioBufferInMemory = ref(null); // To hold the AudioBuffer after hiding
-  const stegoAudioUrl = ref(''); // For the <audio> tag src
+  const stegoAudioBufferInMemory = ref(null); // Pro uchování AudioBuffer po ukrytí
+  const stegoAudioUrl = ref(''); // Pro src atribut <audio> tagu
   const downloadDialog = ref(false);
   const downloadFileName = ref('stego_audio');
   const downloadFileSuffix = ref('.wav');
 
-  // Reveal section
+  // Proměnné pro odkrývání zprávy
   const stegoAudioFileForReveal = ref(null);
   const stegoAudioBufferForReveal = ref(null);
   const revealedMessage = ref('');
@@ -199,7 +211,7 @@
 
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-  // Clipboard and file import for secret message
+  // Schránka a import souborů pro tajnou zprávu
   const secretMessageFileInput = ref(null);
   function triggerSecretMessageFileInput() {
     secretMessageFileInput.value.click();
@@ -232,6 +244,7 @@
     event.target.value = '';
   }
 
+  // Načtení audio souboru jako AudioBuffer
   async function loadAudioFileAsBuffer(file) {
     if (!file) return null;
     const arrayBuffer = await file.arrayBuffer();
@@ -243,21 +256,22 @@
     }
   }
 
+  // Zpracování vybraného audio souboru pro nosič
   async function onCarrierAudioSelected() {
-    // Reset states related to previous steganography operations or in-memory audio
+    // Resetování stavů souvisejících s předchozími operacemi steganografie nebo audio v paměti
     isProcessing.value = true;
     stegoAudioUrl.value = '';
     stegoAudioBufferInMemory.value = null;
     revealedMessage.value = '';
     useInMemoryAudio.value = false;
-    stegoAudioFileForReveal.value = null; // Clear file input on reveal tab
-    stegoAudioBufferForReveal.value = null; // Clear buffer for reveal tab
-    carrierAudioInfo.value = null; // Reset carrier info before loading new one
+    stegoAudioFileForReveal.value = null; // Vyčištění vstupu souboru na záložce odkrytí
+    stegoAudioBufferForReveal.value = null; // Vyčištění bufferu na záložce odkrytí
+    carrierAudioInfo.value = null; // Resetování informací o nosiči před načtením nového
 
     carrierAudioBuffer.value = await loadAudioFileAsBuffer(carrierAudioFile.value);
     if (carrierAudioBuffer.value) {
       const buffer = carrierAudioBuffer.value;
-      const capacityBytes = Math.floor((buffer.getChannelData(0).length - 16) / 8); // 16 bits for delimiter
+      const capacityBytes = Math.floor((buffer.getChannelData(0).length - 16) / 8); // 16 bitů pro oddělovač
       carrierAudioInfo.value = {
         duration: buffer.duration,
         sampleRate: buffer.sampleRate,
@@ -271,6 +285,7 @@
     isProcessing.value = false;
   }
 
+  // Funkce pro ukrytí zprávy v audio souboru
   async function performHideInAudio() {
     if (!carrierAudioBuffer.value || !secretMessage.value) {
       emit('show-message', { message: 'Prosím, nahrajte audio a zadejte zprávu.', type: 'error' });
@@ -279,14 +294,14 @@
     isProcessing.value = true;
     emit('show-message', { message: 'Probíhá ukrývání zprávy...', type: 'info' });
 
-    // Simulate delay for processing
+    // Simulace zpoždění pro zpracování
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     const resultBuffer = hideInAudio(carrierAudioBuffer.value, secretMessage.value);
 
     if (resultBuffer) {
       stegoAudioBufferInMemory.value = resultBuffer;
-      // Create a WAV blob for playback
+      // Vytvoření WAV blobu pro přehrávání
       const wavBlob = audioBufferToWavBlob(resultBuffer);
       if (wavBlob) {
         stegoAudioUrl.value = URL.createObjectURL(wavBlob);
@@ -300,11 +315,13 @@
     isProcessing.value = false;
   }
 
+  // Otevření dialogu pro stažení
   function openDownloadDialog() {
     downloadFileName.value = 'stego_audio';
     downloadDialog.value = true;
   }
 
+  // Stažení audio souboru s ukrytou zprávou
   function downloadStegoAudio() {
     if (!stegoAudioBufferInMemory.value) return;
     const wavBlob = audioBufferToWavBlob(stegoAudioBufferInMemory.value);
@@ -319,14 +336,15 @@
     }
   }
 
+  // Příprava audio v paměti pro odkrytí
   function prepareStegoAudioForReveal() {
-    if (stegoAudioBufferInMemory.value && stegoAudioUrl.value /* Ensure URL is also set from hide op */) {
+    if (stegoAudioBufferInMemory.value && stegoAudioUrl.value /* Ujištění, že URL je také nastavena z operace ukrytí */) {
       stegoAudioBufferForReveal.value = stegoAudioBufferInMemory.value;
       useInMemoryAudio.value = true;
-      // stegoAudioUrl is already set from performHideInAudio
+      // stegoAudioUrl je již nastavena z performHideInAudio
 
-      activeTab.value = 'reveal'; // Switch to reveal tab
-      revealedMessage.value = ''; // Clear any previous revealed message on the reveal tab
+      activeTab.value = 'reveal'; // Přepnutí na záložku odkrytí
+      revealedMessage.value = ''; // Vyčištění případné předchozí odkryté zprávy na záložce odkrytí
 
       emit('show-message', { message: 'Připraveno k odkrytí zprávy z aktuálně vygenerovaného audia.', type: 'info' });
     } else {
@@ -334,15 +352,17 @@
     }
   }
 
+  // Vyčištění audio v paměti
   function clearInMemoryAudio() {
     useInMemoryAudio.value = false;
     stegoAudioBufferForReveal.value = null;
-    stegoAudioUrl.value = ''; // Clear the URL
-    stegoAudioBufferInMemory.value = null; // Also clear the source buffer for hide tab's output
-    revealedMessage.value = ''; // Clear revealed message as context changes
+    stegoAudioUrl.value = ''; // Vyčištění URL
+    stegoAudioBufferInMemory.value = null; // Také vyčištění zdrojového bufferu pro výstup záložky ukrytí
+    revealedMessage.value = ''; // Vyčištění odkryté zprávy při změně kontextu
     emit('show-message', { message: 'Režim audia v paměti zrušen. Můžete nyní načíst audio soubor.', type: 'info' });
   }
 
+  // Zpracování vybraného audio souboru pro odkrytí
   async function onStegoAudioForRevealSelected() {
     isProcessing.value = true;
     if (stegoAudioFileForReveal.value) {
@@ -360,6 +380,7 @@
     isProcessing.value = false;
   }
 
+  // Funkce pro odkrytí zprávy z audio souboru
   async function performRevealFromAudioFile() {
     if (!stegoAudioBufferForReveal.value && !useInMemoryAudio.value) {
       emit('show-message', { message: 'Prosím, nahrajte audio s ukrytou zprávou.', type: 'error' });
@@ -368,11 +389,12 @@
     performRevealFromGivenBuffer(stegoAudioBufferForReveal.value);
   }
 
+  // Zpracování odkrytí zprávy z daného bufferu
   async function performRevealFromGivenBuffer(bufferToReveal) {
     isProcessing.value = true;
     emit('show-message', { message: 'Probíhá odkrývání zprávy...', type: 'info' });
 
-    // Simulate delay for processing
+    // Simulace zpoždění pro zpracování
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     if (!bufferToReveal) {
@@ -396,6 +418,7 @@
     isProcessing.value = false;
   }
 
+  // Formátování velikosti dat
   function formatCapacity(byteSize) {
     if (!byteSize || byteSize < 0) return '0 B';
     if (byteSize < 1024) return `${byteSize} B`;
@@ -403,6 +426,7 @@
     return `${(byteSize / (1024 * 1024)).toFixed(2)} MB`;
   }
 
+  // Kopírování odkryté zprávy do schránky
   function copyRevealedMessage() {
     if (!revealedMessage.value) {
       emit('show-message', { message: 'Není k dispozici žádný text ke kopírování.', type: 'error' });
@@ -414,6 +438,7 @@
       .catch((err) => emit('show-message', { message: `Nepodařilo se zkopírovat text: ${err}`, type: 'error' }));
   }
 
+  // Stažení odkryté zprávy jako textového souboru
   function downloadRevealedMessage() {
     if (!revealedMessage.value) {
       emit('show-message', { message: 'Není k dispozici žádný text ke stažení.', type: 'error' });
@@ -432,18 +457,18 @@
     emit('show-message', { message: 'Odkrytý text byl úspěšně stažen.', type: 'success' });
   }
 
-  // Helper function to convert AudioBuffer to a WAV Blob (simplified)
+  // Pomocná funkce pro převod AudioBuffer na WAV Blob (zjednodušená)
   function audioBufferToWavBlob(audioBuffer) {
     const numChannels = audioBuffer.numberOfChannels;
     const sampleRate = audioBuffer.sampleRate;
     const numFrames = audioBuffer.length;
-    const bitsPerSample = 16; // Standard for WAV
+    const bitsPerSample = 16; // Standard pro WAV
 
     const interleaved = new Int16Array(numFrames * numChannels);
     for (let channel = 0; channel < numChannels; channel++) {
       const channelData = audioBuffer.getChannelData(channel);
       for (let i = 0; i < numFrames; i++) {
-        // Convert float sample to 16-bit integer
+        // Převod float vzorku na 16-bitové celé číslo
         const sample = Math.max(-1, Math.min(1, channelData[i]));
         interleaved[i * numChannels + channel] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
       }
@@ -452,7 +477,7 @@
     const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
     const blockAlign = numChannels * (bitsPerSample / 8);
     const dataSize = numFrames * numChannels * (bitsPerSample / 8);
-    const bufferSize = 44 + dataSize; // 44 bytes for WAV header
+    const bufferSize = 44 + dataSize; // 44 bajtů pro WAV hlavičku
 
     const buffer = new ArrayBuffer(bufferSize);
     const view = new DataView(buffer);
@@ -463,8 +488,8 @@
     writeString(view, 8, 'WAVE');
     // FMT sub-chunk
     writeString(view, 12, 'fmt ');
-    view.setUint32(16, 16, true); // Subchunk1Size (16 for PCM)
-    view.setUint16(20, 1, true); // AudioFormat (1 for PCM)
+    view.setUint32(16, 16, true); // Subchunk1Size (16 pro PCM)
+    view.setUint16(20, 1, true); // AudioFormat (1 pro PCM)
     view.setUint16(22, numChannels, true);
     view.setUint32(24, sampleRate, true);
     view.setUint32(28, byteRate, true);
@@ -474,7 +499,7 @@
     writeString(view, 36, 'data');
     view.setUint32(40, dataSize, true);
 
-    // Write PCM data
+    // Zápis PCM dat
     let offset = 44;
     for (let i = 0; i < interleaved.length; i++, offset += 2) {
       view.setInt16(offset, interleaved[i], true);
@@ -483,18 +508,20 @@
     return new Blob([view], { type: 'audio/wav' });
   }
 
+  // Pomocná funkce pro zápis řetězce do DataView
   function writeString(view, offset, string) {
     for (let i = 0; i < string.length; i++) {
       view.setUint8(offset + i, string.charCodeAt(i));
     }
   }
 
+  // Kontrola, zda text obsahuje neanglické znaky
   function hasNonLatinChars(text) {
     if (!text) return false;
-
     return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
 
+  // Sledování změn aktivní záložky
   watch(activeTab, (newTab) => {
     emit('show-message', { message: '', type: 'info' });
     revealedMessage.value = '';

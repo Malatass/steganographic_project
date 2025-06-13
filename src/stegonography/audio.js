@@ -1,65 +1,65 @@
-const END_OF_MESSAGE_DELIMITER_BINARY = '0000000000000000'; // 16 zeros, 2 bytes
+const END_OF_MESSAGE_DELIMITER_BINARY = '0000000000000000'; // 16 nul, 2 bajty
 const MAGIC_HEADER = 'STEGANOAUDIO1';
 
 /**
- * Converts text to a binary string representation of its UTF-8 encoded, Base64 version.
- * @param {string} text The input text.
- * @returns {string} The binary string representation.
+ * Převádí text na binární řetězec reprezentující jeho kódování v UTF-8, převedeného do Base64.
+ * @param {string} text Vstupní text.
+ * @returns {string} Binární řetězec.
  */
 function textToBinary(text) {
-  // Step 1: Encode text to UTF-8 bytes
+  // Krok 1: Kódování textu do UTF-8 bajtů
   const encoder = new TextEncoder();
   const utf8Bytes = encoder.encode(text); // Uint8Array
 
-  // Step 2: Convert UTF-8 bytes to a Base64 string
-  // First, convert Uint8Array to a string where each character's code is a byte value
+  // Krok 2: Převod UTF-8 bajtů na Base64 řetězec
+  // Nejprve převedeme Uint8Array na řetězec, kde každý znak odpovídá hodnotě bajtu
   let binaryStringForBtoa = '';
   for (let i = 0; i < utf8Bytes.length; i++) {
     binaryStringForBtoa += String.fromCharCode(utf8Bytes[i]);
   }
-  const base64Encoded = btoa(binaryStringForBtoa); // base64Encoded now contains only A-Z, a-z, 0-9, +, /, =
+  const base64Encoded = btoa(binaryStringForBtoa); // base64Encoded obsahuje pouze A-Z, a-z, 0-9, +, /, =
 
-  // Step 3: Convert the Base64 string to a binary string (sequence of '0' and '1')
+  // Krok 3: Převod Base64 řetězce na binární řetězec (sekvence '0' a '1')
   return Array.from(base64Encoded)
     .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
     .join('');
 }
 
 /**
- * Converts a binary string (representing UTF-8 encoded, Base64 data) back to text.
- * @param {string} binary The input binary string (sequence of '0's and '1's).
- * @returns {string|null} The decoded text, or null if decoding fails.
+ * Převádí binární řetězec (reprezentující UTF-8 kódovaná Base64 data) zpět na text.
+ * @param {string} binary Vstupní binární řetězec (sekvence '0' a '1').
+ * @returns {string|null} Dekódovaný text nebo null při selhání dekódování.
  */
 function binaryToText(binary) {
   let base64Chars = '';
-  // Step 1: Convert binary string (sequence of '0'/'1') back to Base64 string
+  // Krok 1: Převod binárního řetězce (sekvence '0'/'1') zpět na Base64 řetězec
   for (let i = 0; i < binary.length; i += 8) {
     const byte = binary.substring(i, i + 8);
     if (byte.length === 8) {
       base64Chars += String.fromCharCode(parseInt(byte, 2));
     } else {
-      // Pad the last byte with zeros to make it a complete byte
+      // Doplnění posledního bajtu nulami pro úplný bajt
       const paddedByte = byte.padEnd(8, '0');
       base64Chars += String.fromCharCode(parseInt(paddedByte, 2));
     }
   }
 
   try {
-    // Step 2: Decode Base64 string to "binary string" (string of original byte values)
-    const decodedBinaryString = atob(base64Chars); // Can throw InvalidCharacterError
+    // Krok 2: Dekódování Base64 řetězce na "binární řetězec" (řetězec původních hodnot bajtů)
+    const decodedBinaryString = atob(base64Chars); // Může vyhodit InvalidCharacterError
 
-    // Step 3: Convert "binary string" to Uint8Array
+    // Krok 3: Převod "binárního řetězce" na Uint8Array
     const bytes = new Uint8Array(decodedBinaryString.length);
     for (let i = 0; i < decodedBinaryString.length; i++) {
       bytes[i] = decodedBinaryString.charCodeAt(i);
     }
 
-    // Step 4: Decode Uint8Array (as UTF-8) back to original text
-    const decoder = new TextDecoder('utf-8', { fatal: true }); // fatal: true throws on invalid UTF-8
+    // Krok 4: Dekódování Uint8Array (jako UTF-8) zpět na původní text
+    const decoder = new TextDecoder('utf-8', { fatal: true }); // fatal: true vyhodí chybu při neplatném UTF-8
     return decoder.decode(bytes);
   } catch (e) {
-    console.error(`Error in binaryToText: ${e.message}. Problematic Base64 string (or part of it): "${base64Chars.substring(0, 100)}..."`);
-    return null; // Indicate failure
+    console.error(`Chyba při převodu binárních dat na text: ${e.message}. Problematický Base64 řetězec (nebo část): "${base64Chars.substring(0, 100)}..."`);
+    return null; // Indikace selhání
   }
 }
 
@@ -83,17 +83,14 @@ export function hideInAudio(originalAudioBuffer, message) {
   const availableSamples = numSamples - startOffset;
 
   if (requiredSamples > availableSamples) {
-    console.error(
-      '[AUDIO ENCODE] Message too long for audio capacity:',
-      {
-        messageLength: message.length,
-        binaryLength: messageBinary.length,
-        requiredSamples,
-        availableSamples,
-        audioDuration: originalAudioBuffer.duration,
-        sampleRate: originalAudioBuffer.sampleRate
-      }
-    );
+    console.error('[AUDIO KÓDOVÁNÍ] Zpráva je příliš dlouhá pro kapacitu audia:', {
+      délkaZprávy: message.length,
+      délkaBinárně: messageBinary.length,
+      potřebnéVzorky: requiredSamples,
+      dostupnéVzorky: availableSamples,
+      délkaTrvání: originalAudioBuffer.duration,
+      vzorkovacíFrekvence: originalAudioBuffer.sampleRate
+    });
     return null;
   }
 
@@ -185,14 +182,14 @@ export function revealFromAudio(stegoAudioBuffer) {
 
       if (!decodedTextWithHeader) {
         console.warn(
-          '[AUDIO DECODE] Failed to decode binary data to text. The data might be corrupted, not valid Base64/UTF-8, or the LSBs were not retrieved correctly.'
+          '[AUDIO DEKÓDOVÁNÍ] Nepodařilo se dekódovat binární data na text. Data mohou být poškozená, nejsou platný Base64/UTF-8 formát, nebo LSB bity nebyly správně získány.'
         );
         return null;
       }
 
       if (!decodedTextWithHeader.startsWith(MAGIC_HEADER)) {
         console.warn(
-          `[AUDIO DECODE] Magic header not found. Expected "${MAGIC_HEADER}" but processing yielded data starting differently. Decoded data (start): "${decodedTextWithHeader.substring(0, MAGIC_HEADER.length + 10)}..."`
+          `[AUDIO DEKÓDOVÁNÍ] Magická hlavička nebyla nalezena. Očekávána "${MAGIC_HEADER}", ale zpracování poskytlo data začínající jinak. Dekódovaná data (začátek): "${decodedTextWithHeader.substring(0, MAGIC_HEADER.length + 10)}..."`
         );
         return null;
       }
@@ -202,6 +199,6 @@ export function revealFromAudio(stegoAudioBuffer) {
     }
   }
 
-  console.warn('[AUDIO DECODE] Oddělovač konce zprávy nebyl nalezen. Žádná zpráva nebyla extrahována.');
+  console.warn('[AUDIO DEKÓDOVÁNÍ] Oddělovač konce zprávy nebyl nalezen. Žádná zpráva nebyla extrahována.');
   return null; // Oddělovač nebyl nalezen
 }

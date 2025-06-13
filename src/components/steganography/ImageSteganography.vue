@@ -378,7 +378,7 @@
   const stegoImagePreview = ref('');
   const stegoImageUrl = ref('');
 
-  // Reference na canvasy
+  // Reference pro canvas elementy
   const carrierCanvas = ref(null);
   const secretCanvas = ref(null);
   const stegoCanvas = ref(null);
@@ -386,25 +386,24 @@
   const diffMapCanvas = ref(null);
   const enhancedVisCanvas = ref(null);
 
-  // Add this computed property
   const canPerformHide = computed(() => {
-    // Check if carrier image and its processed data are ready
+    // Základní kontrola, zda je vybrán nosný obrázek
     if (!carrierFile.value || !carrierImageInfo.value || !carrierImageInfo.value.originalCanvas) {
       return false;
     }
 
-    // Check requirements based on hideMode
+    // Kontrola podle režimu ukrývání
     if (hideMode.value === 'text') {
       return !!secretText.value;
     }
 
     if (hideMode.value === 'image') {
-      // Check if secret image and its processed data are ready
+      // Zde kontrolujeme, zda je vybrán tajný obrázek a zda má potřebné informace
       if (!secretImageFile.value || !secretImageInfo.value || !secretImageInfo.value.originalCanvas) {
         return false;
       }
     }
-    return true; // All conditions for the current mode are met
+    return true; // Všechny podmínky splněny
   });
 
   // Šifrování a hesla
@@ -565,7 +564,7 @@
 
     isEncryptedContent.value = false;
     decryptionPassword.value = '';
-    decryptionType.value = 'none'; // Reset
+    decryptionType.value = 'none';
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -576,7 +575,7 @@
           return;
         }
 
-        // Setup canvas for preview
+        // Nastavení canvas na velikost obrázku (max 400px pro náhled, zachování poměru stran)
         const maxWidth = 400;
         const ratio = Math.min(1, maxWidth / img.width);
 
@@ -589,7 +588,7 @@
 
         stegoImagePreview.value = e.target.result;
 
-        // Create header detection canvas
+        // Pokud je režim odkrývání automatický, pokusíme se detekovat hlavičku
         const headerDetectionCanvas = document.createElement('canvas');
         headerDetectionCanvas.width = Math.min(200, img.width);
         headerDetectionCanvas.height = Math.min(200, img.height);
@@ -608,7 +607,7 @@
             const parts = initialPeekText.substring(10).split(':');
 
             if (parts.length >= 1) {
-              const encTypeHeader = parts[0]; // Should be AES-128 or AES-256
+              const encTypeHeader = parts[0];
               const detectedEncType = encTypeHeader === 'AES-128' ? 'aes128' : encTypeHeader === 'AES-256' ? 'aes256' : '';
 
               if (detectedEncType) {
@@ -657,7 +656,7 @@
       return;
     }
 
-    // Defensive checks
+    // Kontrola, zda jsou načteny potřebné informace
     if (!carrierImageInfo.value || !carrierImageInfo.value.originalCanvas) {
       emit('show-message', { message: 'Chyba: Informace o nosném obrázku nejsou kompletní. Počkejte prosím na dokončení načítání.', type: 'error' });
       return;
@@ -671,7 +670,7 @@
     emit('show-message', { message: 'Probíhá ukrývání dat...', type: 'info' });
 
     try {
-      // Get original canvas
+      // Získáme originální canvas nosného obrázku
       const originalCanvas = carrierImageInfo.value.originalCanvas;
       let stegoImageData;
 
@@ -798,11 +797,11 @@
       message: 'Probíhá odkrývání dat...',
       type: 'info'
     });
-    revealedData.value = ''; // Clear previous results
-    revealedImageUrl.value = ''; // Clear previous results
+    revealedData.value = '';
+    revealedImageUrl.value = '';
 
     try {
-      // Create canvas with full resolution
+      // Načteme obrázek z vybraného souboru
       const img = new Image();
       const loadImagePromise = new Promise((resolve, reject) => {
         img.onload = resolve;
@@ -822,43 +821,39 @@
         throw new Error('Nepodařilo se získat kontext pro fullCanvas.');
       }
       fullCtx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(img.src); // Clean up the object URL
+      URL.revokeObjectURL(img.src);
 
-      // For auto mode, we'll try both methods
+      // Automatická detekce režimu odkrývání
       if (revealMode.value === 'auto') {
-        // First try text reveal to check header
         try {
           const initialTextPeek = await peekInitialTextFromImage(fullCanvas, revealBitsPerChannel.value);
 
-          // Check if it has a recognizable header
+          // Zkontrolujeme, zda je to text nebo šifrovaný text
           if (initialTextPeek && (initialTextPeek.startsWith('TEXT:') || initialTextPeek.startsWith('ENCRYPTED:'))) {
-            // It's likely text, call text processing
+            // Pokud je to text nebo šifrovaný text, použijeme textový režim
             await processTextReveal(fullCanvas);
             return;
           }
-        } catch (textPeekError) {
-          // If peek fails, continue to try image processing
-        }
+        } catch (textPeekError) {}
 
-        // If no text header found or error, try image processing
         try {
           await processImageReveal(fullCanvas);
           return;
         } catch (imageError) {
-          // If image fails too, try one more time with text (full reveal)
+          // Pokud selže odkrývání obrázku, zkusíme textové odkrývání
           try {
             await processTextReveal(fullCanvas);
             return;
           } catch (textError) {
-            // If both methods fail, show consolidated error
+            // Pokud selže i textové odkrývání, vyhodíme chybu
             throw new Error(`Automatická detekce selhala. Nelze rozpoznat formát ukrytých dat.`);
           }
         }
       } else if (revealMode.value === 'text') {
-        // Text mode specifically selected
+        // Textový režim specificky vybrán
         await processTextReveal(fullCanvas);
       } else if (revealMode.value === 'image') {
-        // Image mode specifically selected
+        // Obrázkový režim specificky vybrán
         await processImageReveal(fullCanvas);
       }
     } catch (e) {
@@ -871,7 +866,7 @@
       isProcessing.value = false;
     }
 
-    // Helper function to process text reveal with all edge cases
+    // Pomocná funkce pro zpracování textového odkrývání
     async function processTextReveal(canvas) {
       let revealedTextContent = await revealTextFromImage(canvas, revealBitsPerChannel.value);
 
@@ -882,22 +877,21 @@
           throw new Error('Chybný formát šifrované hlavičky.');
         }
 
-        const detectedHeaderEncType = headerMatch[1]; // "AES-128" or "AES-256"
+        const detectedHeaderEncType = headerMatch[1];
         const actualCipherText = headerMatch[2];
         const actualDecryptionTypeFromHeader = detectedHeaderEncType === 'AES-128' ? 'aes128' : 'aes256';
 
-        // Update UI state for encryption
+        // Zkontrolujeme, zda je dešifrování povoleno
         isEncryptedContent.value = true;
         decryptionType.value = actualDecryptionTypeFromHeader;
 
-        // Check for password
+        // Kontrola hesla
         if (!decryptionPassword.value) {
           emit('show-message', {
             message: `Obsah je šifrován (${decryptionType.value.toUpperCase()}). Zadejte prosím heslo.`,
             type: 'warning'
           });
 
-          // Always show the decryption UI and update the message
           revealedData.value = 'Zašifrovaný obsah. Zadejte prosím heslo pro dešifrování.';
 
           scrollTo('.scroll-to-decode');
@@ -917,7 +911,7 @@
           throw new Error(`Nepodařilo se dešifrovat data: ${decErr.message || 'Neplatné heslo nebo chyba formátu.'}`);
         }
       } else if (revealedTextContent.startsWith('TEXT:')) {
-        // Clean up the text header
+        // Pokud je to text s hlavičkou TEXT:
         const textHeaderMatch = revealedTextContent.match(/^TEXT:(\d+):(.*)$/s);
         if (textHeaderMatch) {
           const declaredLength = parseInt(textHeaderMatch[1], 10);
@@ -926,9 +920,9 @@
         }
       }
 
-      // Set the result
+      // Pokud je to čistý text bez hlavičky, použijeme ho přímo
       revealedData.value = revealedTextContent;
-      revealedImageUrl.value = ''; // Clear image result
+      revealedImageUrl.value = '';
 
       emit('show-message', {
         message: 'Text byl úspěšně odkryt.',
@@ -938,21 +932,18 @@
       scrollTo('.scroll-to-decode');
     }
 
-    // Helper function to process image reveal with all edge cases
+    // Pomocná funkce pro zpracování obrázkového odkrývání
     async function processImageReveal(canvas) {
       const revealedImageData = await revealImageFromImage(canvas, revealBitsPerChannel.value);
 
-      // Check if the revealed data could be encrypted image header
+      // Kontrola, zda jsme získali platná data obrázku
       const headerBytes = new Uint8Array(revealedImageData.data.buffer, 0, Math.min(50, revealedImageData.data.length));
       const headerText = new TextDecoder().decode(headerBytes);
 
-      // Look for encryption header in image data
+      // Kontrola, zda je obrázek šifrovaný
       if (headerText.includes('ENCRYPTED:')) {
-        // Handle encrypted image - this is just a basic check
-        // Full implementation would need to extract encryption details
         isEncryptedContent.value = true;
 
-        // Determine encryption type from header
         if (headerText.includes('AES-128')) {
           decryptionType.value = 'aes128';
         } else if (headerText.includes('AES-256')) {
@@ -965,20 +956,16 @@
             type: 'warning'
           });
 
-          // Show placeholder indicating encryption
-          revealedImageUrl.value = ''; // Clear any image
+          revealedImageUrl.value = '';
           revealedData.value = 'Zašifrovaný obsah (obrázek). Zadejte prosím heslo pro dešifrování.';
 
           scrollTo('.scroll-to-decode');
           return;
         }
 
-        // Decrypt image processing would be implemented here
-        // For now we'll throw an error
         throw new Error('Dešifrování obrázků není aktuálně podporováno.');
       }
 
-      // Regular unencrypted image processing
       const revealedCanvas = document.createElement('canvas');
       revealedCanvas.width = revealedImageData.width;
       revealedCanvas.height = revealedImageData.height;
@@ -988,7 +975,7 @@
       revealedCtx.putImageData(revealedImageData, 0, 0);
 
       revealedImageUrl.value = revealedCanvas.toDataURL('image/png');
-      revealedData.value = ''; // Clear text data
+      revealedData.value = '';
 
       emit('show-message', {
         message: 'Obrázek byl úspěšně odkryt.',
@@ -999,7 +986,7 @@
     }
   }
 
-  // Function to prepare the download dialog
+  // Pomocná funkce pro stahovíní souborů s dialogem pro název
   function prepareDownload(defaultName, fileType, callback) {
     downloadFileName.value = defaultName;
     downloadFileType.value = fileType;
@@ -1007,7 +994,7 @@
     showFileNameDialog.value = true;
   }
 
-  // Function to perform the download after the dialog is confirmed
+  // Funkce pro provedení stažení souboru
   function performDownload() {
     if (!downloadFileName.value) {
       emit('show-message', {
@@ -1158,7 +1145,6 @@
   // Reset výstupu při změně záložky
   function resetOutputs() {
     if (activeTab.value === 'hide') {
-      // Reset reveal tab state
       stegoFile.value = null;
       stegoImagePreview.value = '';
       revealedData.value = '';
@@ -1167,10 +1153,9 @@
       decryptionPassword.value = '';
       decryptionType.value = 'none';
       showDecryptPassword.value = false;
-      revealMode.value = 'auto'; // Reset to default mode
-      revealBitsPerChannel.value = 1; // Reset to default bits
+      revealMode.value = 'auto';
+      revealBitsPerChannel.value = 1;
     } else if (activeTab.value === 'reveal') {
-      // Reset hide tab state
       stegoImageUrl.value = '';
       carrierFile.value = null;
       secretText.value = '';
@@ -1182,8 +1167,8 @@
       encryptionType.value = 'none';
       encryptionPassword.value = '';
       showPassword.value = false;
-      hideMode.value = 'text'; // Reset to default mode
-      bitsPerChannel.value = 1; // Reset to default bits
+      hideMode.value = 'text';
+      bitsPerChannel.value = 1;
     }
 
     emit('show-message', { message: '', type: 'info' });
@@ -1198,8 +1183,6 @@
       (!secretCanvas.value && secretImagePreview.value) ||
       (!stegoCanvas.value && stegoImagePreview.value)
     ) {
-      // This condition is more precise: warn if a preview flag is true but canvas is still null.
-      // However, to address the user's current observation:
       console.warn(
         'Některé canvasy pro náhledy (carrier, secret, stego) nejsou při inicializaci komponenty dostupné. To je očekávané, pokud nejsou obrázky ještě načteny a zobrazeny, a canvasy se objeví později.'
       );
@@ -1218,7 +1201,6 @@
         return;
       }
 
-      // Apply to the secret text field
       secretText.value = text;
       emit('show-message', {
         message: 'Text ze schránky byl vložen',
@@ -1241,15 +1223,12 @@
     }, 100);
   };
 
-  // Add watchers for mode changes
   watch(hideMode, (newMode) => {
-    // Reset relevant fields when switching between text and image hiding modes
     secretText.value = '';
     secretImageFile.value = null;
     secretImagePreview.value = '';
     secretImageInfo.value = null;
 
-    // Reset encryption state when switching modes
     encryptionType.value = 'none';
     encryptionPassword.value = '';
     showPassword.value = false;
@@ -1258,34 +1237,22 @@
 
     emit('show-message', { message: '', type: 'info' });
 
-    // Also reset the output preview
     stegoImageUrl.value = '';
   });
 
   watch(revealMode, (newMode) => {
-    // Reset revealed data when switching reveal modes
     revealedData.value = '';
     revealedImageUrl.value = '';
 
-    // Reset decryption state when switching modes
     if (newMode !== 'text') {
       decryptionPassword.value = '';
       isEncryptedContent.value = false;
     }
 
-    // Reset error messages
     emit('show-message', { message: '', type: 'info' });
-
-    // If auto mode was selected and we have a stegoFile already loaded,
-    // we should skip running the detection again since onStegoImageSelected already did it
-    if (newMode === 'auto' && stegoFile.value && stegoImagePreview.value) {
-      // Don't do anything special for auto mode selection if image is already loaded
-      // The detection will happen when user clicks the reveal button
-    }
   });
 
   watch([bitsPerChannel, revealBitsPerChannel], () => {
-    // Reset output results when changing bits settings
     if (activeTab.value === 'hide') {
       stegoImageUrl.value = '';
     } else {
@@ -1293,14 +1260,12 @@
       revealedImageUrl.value = '';
     }
 
-    // Update capacity if in hide mode
     if (activeTab.value === 'hide') {
       updateMaxTextLength();
     }
 
     emit('show-message', { message: '', type: 'info' });
   });
-  // Add this as a computed property
   const secretMessageBinary = computed(() => {
     if (hideMode.value === 'text') {
       return textToBinary(secretText.value);
@@ -1308,7 +1273,7 @@
     return '';
   });
 
-  // Function to convert text to binary representation
+  // Funkce pro převod textu na binární reprezentaci
   function textToBinary(text) {
     if (!text) return '';
 
@@ -1317,12 +1282,13 @@
         const binary = char.charCodeAt(0).toString(2).padStart(8, '0');
         return binary;
       })
-      .join(' '); // Space between bytes for readability
+      .join(' ');
   }
 
+  // Funkce pro kontrolu, zda text obsahuje znaky mimo latinku
   function hasNonLatinChars(text) {
     if (!text) return false;
-    // Checks for any non-ASCII character (including Czech)
+
     return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
 </script>

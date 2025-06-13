@@ -1,43 +1,43 @@
 import { hideTextInImage, revealTextFromImage } from './image';
 
 /**
- * Hides text in a specific frame of a video
- * @param {HTMLVideoElement} video - The video element
- * @param {string} message - The message to hide
- * @param {number} frameIndex - The index of the frame to use (default: 0 - first frame)
- * @param {number} bitsPerChannel - Bits per color channel for LSB (1-3)
- * @returns {Object} - Object containing the frame data and metadata
+ * Ukrývá text v konkrétním snímku videa
+ * @param {HTMLVideoElement} video - Video element
+ * @param {string} message - Zpráva k ukrytí
+ * @param {number} frameIndex - Index snímku, který se má použít (výchozí: 0 - první snímek)
+ * @param {number} bitsPerChannel - Počet bitů na barevný kanál pro LSB (1-3)
+ * @returns {Object} - Objekt obsahující data snímku a metadata
  */
 export async function hideTextInVideoFrame(video, message, frameIndex = 0, bitsPerChannel = 1) {
-  // Extract the specific frame
+  // Extrakce konkrétního snímku
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
 
-  // Seek to the desired frame
-  video.currentTime = frameIndex / 30; // Assuming 30fps
+  // Posun na požadovaný snímek
+  video.currentTime = frameIndex / 30; // Předpokládáme 30fps
 
-  // Wait for the video to seek to the desired frame
+  // Počkáme, až se video přesune na požadovaný snímek
   await new Promise((resolve) => {
     video.onseeked = resolve;
   });
 
-  // Draw the frame to canvas
+  // Vykreslení snímku na plátno
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  // Hide the text in the frame using existing image steganography
+  // Ukrytí textu do snímku pomocí existující obrazové steganografie
   const stegoImageData = await hideTextInImage(canvas, message, bitsPerChannel);
 
-  // Put the modified frame back to canvas
+  // Vložení upraveného snímku zpět do plátna
   ctx.putImageData(stegoImageData, 0, 0);
 
-  // Get frame as data URL for preview
+  // Získání snímku jako URL pro náhled
   const modifiedFrameUrl = canvas.toDataURL('image/png');
 
   return {
     modifiedFrame: modifiedFrameUrl,
-    frameCanvas: canvas, // Return the canvas for in-memory decoding
+    frameCanvas: canvas, // Vrátíme plátno pro dekódování v paměti
     frameIndex: frameIndex,
     originalWidth: video.videoWidth,
     originalHeight: video.videoHeight
@@ -45,55 +45,55 @@ export async function hideTextInVideoFrame(video, message, frameIndex = 0, bitsP
 }
 
 /**
- * Reveals text from a specific frame of a video, image file, or from frame data
- * @param {HTMLVideoElement|HTMLCanvasElement|HTMLImageElement} source - The video/image element or canvas with frame
- * @param {number} frameIndex - The index of the frame to check (if source is video)
- * @param {number} bitsPerChannel - Bits per color channel used in LSB
- * @returns {Promise<string>} - The hidden message
+ * Odkrývá text z konkrétního snímku videa, souboru obrázku nebo z dat snímku
+ * @param {HTMLVideoElement|HTMLCanvasElement|HTMLImageElement} source - Video/obrázek element nebo plátno se snímkem
+ * @param {number} frameIndex - Index snímku ke kontrole (pokud je source video)
+ * @param {number} bitsPerChannel - Počet bitů na barevný kanál použitých v LSB
+ * @returns {Promise<string>} - Skrytá zpráva
  */
 export async function revealTextFromVideoFrame(source, frameIndex = 0, bitsPerChannel = 1) {
   let canvas;
 
   if (source instanceof HTMLVideoElement) {
-    // Extract the specific frame from video
+    // Extrakce konkrétního snímku z videa
     canvas = document.createElement('canvas');
     canvas.width = source.videoWidth;
     canvas.height = source.videoHeight;
     const ctx = canvas.getContext('2d');
 
-    // Seek to the desired frame
-    source.currentTime = frameIndex / 30; // Assuming 30fps
+    // Posun na požadovaný snímek
+    source.currentTime = frameIndex / 30; // Předpokládáme 30fps
 
-    // Wait for the video to seek to the desired frame
+    // Počkáme, až se video přesune na požadovaný snímek
     await new Promise((resolve) => {
       source.onseeked = resolve;
     });
 
-    // Draw the frame to canvas
+    // Vykreslení snímku na plátno
     ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
   } else if (source instanceof HTMLCanvasElement) {
-    // Use the provided canvas directly
+    // Použití přímo poskytnutého plátna
     canvas = source;
   } else if (source instanceof HTMLImageElement) {
-    // Create a canvas from the image
+    // Vytvoření plátna z obrázku
     canvas = document.createElement('canvas');
     canvas.width = source.width;
     canvas.height = source.height;
     const ctx = canvas.getContext('2d');
 
-    // Make sure the image is loaded
+    // Ujistíme se, že je obrázek načtený
     if (!source.complete) {
       await new Promise((resolve) => {
         source.onload = resolve;
       });
     }
 
-    // Draw the image to canvas
+    // Vykreslení obrázku na plátno
     ctx.drawImage(source, 0, 0);
   } else {
-    throw new Error('Source must be either a video element, image element, or canvas');
+    throw new Error('Zdroj musí být buď video element, obrázek element nebo plátno');
   }
 
-  // Reveal the text using existing image steganography
+  // Odkrytí textu pomocí existující obrazové steganografie
   return await revealTextFromImage(canvas, bitsPerChannel);
 }

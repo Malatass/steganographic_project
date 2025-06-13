@@ -501,40 +501,36 @@ function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
   // Calculate capacity in bits (3 channels * bits per pixel * total pixels - header size)
   const baseCapacity = Math.floor(baseCanvas.width * baseCanvas.height * 3 * bitsPerChannel) - headerSize;
 
-  // Calculate secret image size in bits (4 bytes per pixel * 8 bits per byte * total pixels)
-  // We're only using RGB channels, so it's actually 3 bytes per pixel
+  // Používáme pouze RGB kanály, takže to jsou ve skutečnosti 3 bajty na pixel
   const secretSize = secretCanvas.width * secretCanvas.height * 3 * 8;
 
-
-
-  // If the secret image is too large, resize it
+  // Pokud je tajný obrázek příliš velký, zmenšíme ho
   if (secretSize > baseCapacity) {
-    // Calculate resize factor (with safety margin)
+    // Vypočítáme faktor zmenšení (s bezpečnostní rezervou)
     const resizeFactor = Math.sqrt((baseCapacity / secretSize) * 0.5);
 
-    // Calculate new dimensions ensuring they're at least 1x1
+    // Vypočítáme nové rozměry, zajistíme, že budou alespoň 1x1
     const newWidth = Math.max(1, Math.floor(secretCanvas.width * resizeFactor));
     const newHeight = Math.max(1, Math.floor(secretCanvas.height * resizeFactor));
 
-
-    // Create a temporary canvas for resizing
+    // Vytvoříme dočasné plátno pro změnu velikosti
     const resizedCanvas = document.createElement('canvas');
     resizedCanvas.width = newWidth;
     resizedCanvas.height = newHeight;
 
-    // Draw the original image at the new size
+    // Nakreslíme původní obrázek v nové velikosti
     const resizedCtx = resizedCanvas.getContext('2d');
     if (!resizedCtx) {
       console.error('Could not get context for resize canvas');
       return secretImageData.data;
     }
 
-    // Enable high quality resizing
+    // Povolit vysoce kvalitní změnu velikosti
     resizedCtx.imageSmoothingEnabled = true;
     resizedCtx.imageSmoothingQuality = 'high';
     resizedCtx.drawImage(secretCanvas, 0, 0, secretCanvas.width, secretCanvas.height, 0, 0, newWidth, newHeight);
 
-    // Update the original secret canvas for the UI
+    // Aktualizace původního tajného plátna pro UI
     secretCanvas.width = newWidth;
     secretCanvas.height = newHeight;
     secretCtx.drawImage(resizedCanvas, 0, 0);
@@ -542,23 +538,23 @@ function resizeSecretImageData(secretCanvas, baseCanvas, bitsPerChannel) {
     return secretCtx.getImageData(0, 0, newWidth, newHeight).data;
   }
 
-  // If no resize needed, return the original image data
+  // Pokud není potřeba měnit velikost, vrátíme původní data obrázku
   return secretImageData.data;
 }
 
 /**
- * Peeks at the initial characters hidden in an image canvas.
- * @param {HTMLCanvasElement} canvas - The canvas to read from.
- * @param {number} bitsPerChannel - Bits used per channel for LSB.
- * @param {number} charLimit - Maximum number of characters to reveal.
- * @returns {Promise<string>} The initial revealed characters.
+ * Náhled prvních znaků ukrytých v obrázku na plátně.
+ * @param {HTMLCanvasElement} canvas - Plátno, ze kterého čteme.
+ * @param {number} bitsPerChannel - Počet bitů na kanál pro LSB.
+ * @param {number} charLimit - Maximální počet znaků k odhalení.
+ * @returns {Promise<string>} Prvotní odhalené znaky.
  */
 export async function peekInitialTextFromImage(canvas, bitsPerChannel = 1, charLimit = 50) {
   if (!canvas) return '';
-  // Ensure context can be obtained. In a component, canvas might not be ready.
+  // Ověření, že lze získat context. V komponentě nemusí být plátno připravené.
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) {
-    console.warn('peekInitialTextFromImage: Could not get canvas context.');
+    console.warn('peekInitialTextFromImage: Nelze získat context plátna.');
     return '';
   }
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -570,10 +566,10 @@ export async function peekInitialTextFromImage(canvas, bitsPerChannel = 1, charL
   for (let i = 0; i < data.length; i += 4) {
     if (revealedChars.length >= charLimit) break;
     for (let j = 0; j < 3; j++) {
-      // RGB channels
+      // RGB kanály
       if (revealedChars.length >= charLimit) break;
       const channelIndex = i + j;
-      if (channelIndex >= data.length) break; // Boundary check
+      if (channelIndex >= data.length) break; // Kontrola hranice pole
       const channelValue = data[channelIndex];
       for (let k = bitsPerChannel - 1; k >= 0; k--) {
         const bit = (channelValue & (1 << k)) >> k;

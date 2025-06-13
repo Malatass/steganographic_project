@@ -306,13 +306,13 @@
 
   const emit = defineEmits(['show-message']);
 
-  // Tab control
+  // Ovládání záložek
   const activeTab = ref('hide');
 
-  // Add new state variable for revealed message
+  // Přidání nové stavové proměnné pro odkrytou zprávu
   const revealedMessage = ref('');
 
-  // Text steganography variables
+  // Proměnné pro textovou steganografii
   const originalText = ref('');
   const secretMessage = ref('');
   const stegoTextInput = ref('');
@@ -321,7 +321,7 @@
   const selectedMethod = ref(textStegoMethods[0]);
   const selectedRevealMethod = ref(textStegoMethods[0]);
 
-  // Custom delimiters
+  // Vlastní oddělovače
   const useCustomDelimiters = ref(false);
   const customStartDelimiter = ref('{{START}}');
   const customEndDelimiter = ref('{{END}}');
@@ -370,7 +370,7 @@
     }
   }
 
-  // Download filename
+  // Název souboru pro stahování
   const showFileNameDialog = ref(false);
   const downloadFileName = ref('steganografie_text');
 
@@ -472,7 +472,7 @@
     }
   }
 
-  // Reset all outputs, error messages when switching tabs or methods
+  // Resetování všech výstupů a chybových zpráv při přepínání záložek nebo metod
   function resetOutputs() {
     resultText.value = '';
     revealedMessage.value = '';
@@ -661,7 +661,7 @@
       });
   }
 
-  // Function to download revealed message
+  // Funkce pro stažení odkryté zprávy
   function downloadRevealedMessage() {
     if (!revealedMessage.value) {
       emit('show-message', {
@@ -732,10 +732,10 @@
       const revealed = revealFromText(inputText, selectedRevealMethod.value.value, options);
 
       if (revealed !== null && revealed !== '') {
-        // Set the revealed message in the dedicated textarea
+        // Nastavíme odkrytou zprávu do speciálního textového pole
         revealedMessage.value = revealed;
 
-        // Just show a simple success message
+        // Zobrazíme jednoduchou zprávu o úspěchu
         emit('show-message', {
           message: 'Zpráva byla úspěšně odkryta.',
           type: 'success'
@@ -885,7 +885,7 @@
         return;
       }
 
-      // Apply to appropriate textarea
+      // Aplikujeme na příslušné textové pole
       switch (target) {
         case 'original':
           originalText.value = text;
@@ -903,7 +903,7 @@
           break;
         case 'stego':
           stegoTextInput.value = text;
-          // Also detect encrypted content if applicable
+          // Také detekujeme zašifrovaný obsah, pokud je to možné
           if (text) {
             detectEncryptedContent(text);
           }
@@ -921,7 +921,7 @@
     }
   }
 
-  // Add this as a computed property in your component
+  // Přidání jako počítaná vlastnost v komponentě
   const secretMessageBinary = computed(() => {
     return textToBinary(secretMessage.value);
   });
@@ -934,7 +934,7 @@
         const binary = char.charCodeAt(0).toString(2).padStart(8, '0');
         return binary;
       })
-      .join(' '); // Space between bytes for readability
+      .join(' '); // Mezera mezi bajty pro čitelnost
   }
 
   // Sledujeme změny vybrané metody pro odkrývání
@@ -946,20 +946,20 @@
       }
     }
   );
-  // Add watchers for method changes
+  // Přidáme sledování změn metod
   watch(selectedMethod, () => {
-    // Reset result when changing hiding method
+    // Reset výsledku při změně metody ukrývání
     resultText.value = '';
     emit('show-message', { message: '', type: 'info' });
   });
 
   watch(selectedRevealMethod, () => {
-    // Reset revealed message when changing reveal method
+    // Reset odkryté zprávy při změně metody odkrývání
     revealedMessage.value = '';
     emit('show-message', { message: '', type: 'info' });
   });
 
-  // Reset custom delimiters when toggling their use
+  // Reset vlastních oddělovačů při přepnutí jejich použití
   watch(useCustomDelimiters, () => {
     resultText.value = '';
     emit('show-message', { message: '', type: 'info' });
@@ -970,7 +970,7 @@
     emit('show-message', { message: '', type: 'info' });
   });
 
-  // Reset output when custom delimiters change
+  // Reset výstupu při změně vlastních oddělovačů
   watch([customStartDelimiter, customEndDelimiter], () => {
     if (useCustomDelimiters.value) {
       resultText.value = '';
@@ -985,14 +985,14 @@
     }
   });
 
-  // Add watcher for tab changes and reset logic
+  // Přidání sledování změn záložek a resetovací logiku
   watch(activeTab, () => {
     resetOutputs();
   });
 
   function hasNonLatinChars(text) {
     if (!text) return false;
-    // Checks for any non-ASCII character (including Czech)
+    // Kontroluje přítomnost jakýchkoliv ne-ASCII znaků (včetně češtiny)
     return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
 </script>
