@@ -38,9 +38,9 @@ function binaryToText(binary) {
     if (byte.length === 8) {
       base64Chars += String.fromCharCode(parseInt(byte, 2));
     } else {
-      // This might happen if the binary string length is not a multiple of 8.
-      // Consider if this should be an error or handled differently.
-      console.warn('[AUDIO DECODE] Encountered partial byte at end of binary string:', byte);
+      // Pad the last byte with zeros to make it a complete byte
+      const paddedByte = byte.padEnd(8, '0');
+      base64Chars += String.fromCharCode(parseInt(paddedByte, 2));
     }
   }
 
@@ -79,12 +79,20 @@ export function hideInAudio(originalAudioBuffer, message) {
 
   // Vynechání prvních 200 vzorků + délka zprávy pro kontrolu kapacity
   const startOffset = 200;
-  if (messageBinary.length > numSamples - startOffset) {
+  const requiredSamples = messageBinary.length;
+  const availableSamples = numSamples - startOffset;
+
+  if (requiredSamples > availableSamples) {
     console.error(
-      '[AUDIO ENCODE] Zpráva je příliš dlouhá pro ukrytí v tomto audiu. Délka:',
-      messageBinary.length,
-      'Dostupné vzorky po offsetu:',
-      numSamples - startOffset
+      '[AUDIO ENCODE] Message too long for audio capacity:',
+      {
+        messageLength: message.length,
+        binaryLength: messageBinary.length,
+        requiredSamples,
+        availableSamples,
+        audioDuration: originalAudioBuffer.duration,
+        sampleRate: originalAudioBuffer.sampleRate
+      }
     );
     return null;
   }
