@@ -47,6 +47,14 @@ Tato aplikace byla vytvořena jako splnění požadavku kurzu implementovat netr
    npm install
    ```
 
+## Dostupná prostředí
+
+Aplikace je dostupná online v následujících prostředích:
+
+- **GitHub Pages** - Veřejně dostupná verze aplikace [odkaz bude doplněn]
+- **Server Akela** - Verze běžící na MENDELU serveru [odkaz bude doplněn]
+- **Zdrojový kód** - GitHub repozitář s kompletním kódem [odkaz bude doplněn]
+
 ## Spuštění aplikace
 
 Pro spuštění ve vývojovém režimu:

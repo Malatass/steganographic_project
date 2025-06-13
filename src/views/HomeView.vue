@@ -1,4 +1,3 @@
-<!-- filepath: e:\steganographic\steganographic_project\src\views\HomeView.vue -->
 <template>
   <div class="home-view">
     <!-- Úvodní stránka aplikace -->
@@ -11,7 +10,30 @@
               <p>Vyberte algoritmus pro ukrývání nebo odkrývání informací</p>
             </div>
             <AlgorithmSelector @select-algorithm="handleAlgorithmSelect" />
-            <v-btn to="/features" variant="tonal" color="primary" class="mt-4" prepend-icon="mdi-information-outline">Přehled funkcí aplikace</v-btn>
+            <div class="d-flex justify-center flex-wrap gap-2 mt-6">
+              <v-btn to="/features" variant="tonal" color="primary" class="my-2" prepend-icon="mdi-information-outline">Přehled funkcí aplikace</v-btn>
+
+              <!-- Tlačítka odkazů na GitHub a Akela -->
+              <v-btn href="#" target="_blank" variant="outlined" color="primary" class="ml-3 my-2" prepend-icon="mdi-github">Verze na GitHub Pages</v-btn>
+
+              <v-btn href="#" target="_blank" variant="outlined" color="amber-darken-2" class="ml-3 my-2" prepend-icon="mdi-school">
+                Verze na serveru Akela
+              </v-btn>
+            </div>
+
+            <div class="mt-8 github-badge">
+              <v-tooltip location="top">
+                <template v-slot:activator="{ props }">
+                  <a href="#" target="_blank" v-bind="props">
+                    <v-chip color="grey-darken-3" variant="elevated" class="px-2 py-3" prepend-icon="mdi-source-repository">
+                      <span class="text-caption mr-1">Zdrojový kód:</span>
+                      <strong class="text-white">GitHub</strong>
+                    </v-chip>
+                  </a>
+                </template>
+                <span>Zobrazit zdrojový kód na GitHubu</span>
+              </v-tooltip>
+            </div>
           </div>
         </v-col>
       </v-row>
@@ -83,5 +105,22 @@
     font-size: 1.3rem;
     margin-bottom: 1rem;
     color: #757575;
+  }
+
+  .gap-2 {
+    gap: 0.5rem;
+  }
+
+  .github-badge {
+    display: flex;
+    justify-content: center;
+  }
+
+  .github-badge a {
+    text-decoration: none;
+  }
+
+  .text-white {
+    color: white;
   }
 </style>

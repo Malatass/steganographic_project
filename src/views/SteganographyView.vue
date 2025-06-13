@@ -17,10 +17,10 @@
         <h1 class="text-h4 font-weight-medium text-center mb-6">{{ algorithmTitle }}</h1>
         <p class="text-center mb-8 text-subtitle-1">Zadejte potřebná data pro ukrytí nebo odkrytí informací.</p>
 
-        <!-- Render the appropriate component based on the algorithm -->
+        <!-- Vykreslení odpovídající komponenty podle algoritmu -->
         <component :is="currentComponent" @show-message="showMessage" />
 
-        <!-- Output section -->
+        <!-- Výstupní sekce -->
         <div v-if="outputMessage" class="mt-6">
           <h3 class="text-h6">Výsledek:</h3>
           <v-alert :type="outputType" variant="tonal" class="mt-2 result-alert">
@@ -43,7 +43,7 @@
   const route = useRoute();
   const currentAlgorithm = computed(() => route.params.algorithm || 'text');
 
-  // Algorithm titles in Czech
+  // Názvy algoritmů v češtině
   const algorithmTitles = {
     text: 'Steganografie textu',
     image: 'Steganografie obrázků',
@@ -55,7 +55,7 @@
     return algorithmTitles[currentAlgorithm.value] || 'Steganografie';
   });
 
-  // Map algorithm to component
+  // Mapování algoritmů na komponenty
   const componentMap = {
     text: markRaw(TextSteganography),
     image: markRaw(ImageSteganography),
@@ -63,27 +63,27 @@
     video: markRaw(VideoSteganography)
   };
 
-  // Dynamically select the component based on the algorithm
+  // Dynamický výběr komponenty podle algoritmu
   const currentComponent = computed(() => {
     return componentMap[currentAlgorithm.value] || componentMap.text;
   });
 
-  // Output message and type
+  // Výstupní zpráva a její typ
   const outputMessage = ref('');
   const outputType = ref('info');
 
-  // Reset output when algorithm changes
+  // Reset výstupu při změně algoritmu
   watch(currentAlgorithm, () => {
     outputMessage.value = '';
     outputType.value = 'info';
   });
 
-  // Function to handle message events from child components
+  // Funkce pro zpracování událostí zpráv z dětských komponent
   const showMessage = ({ message, type }) => {
     outputMessage.value = message;
     outputType.value = type || 'info';
 
-    // Scroll to the message
+    // Posunutí na místo se zprávou
     setTimeout(() => {
       const alertElement = document.querySelector('.v-alert');
       if (alertElement) {

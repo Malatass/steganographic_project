@@ -14,8 +14,7 @@
 
         <h1 class="text-h3 font-weight-bold text-center mb-6 app-heading">Přehled funkcí aplikace</h1>
         <p class="text-center mb-8 text-subtitle-1 description-text">Kompletní průvodce steganografickými metodami a možnostmi naší aplikace.</p>
-
-        <!-- Information about school project -->
+        <!-- Informace o školním projektu-->
         <v-card class="mb-8 feature-card elevation-2" rounded="lg">
           <div class="feature-header primary">
             <v-icon size="large" class="feature-icon">mdi-school</v-icon>
@@ -39,7 +38,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Vylepšené karty s moderním vzhledem -->
+        <!-- Vylepšené karty -->
         <v-card class="mb-8 feature-card elevation-2" rounded="lg">
           <div class="feature-header primary">
             <v-icon size="large" class="feature-icon">mdi-information-outline</v-icon>
@@ -507,7 +506,7 @@
           </v-card-text>
         </v-card>
 
-        <!-- Information about school project (closing) -->
+        <!-- Informace o školním projektu závěr-->
         <v-card class="mb-8 feature-card elevation-2" rounded="lg">
           <div class="feature-header primary">
             <v-icon size="large" class="feature-icon">mdi-school-outline</v-icon>
@@ -524,6 +523,46 @@
               dodatečného software. Přestože tento přístup může mít určitá omezení z hlediska výkonu při zpracování větších souborů, poskytuje vysokou míru
               dostupnosti a uživatelské přívětivosti.
             </p>
+          </v-card-text>
+        </v-card>
+
+        <!-- Dostupná prostředí -->
+        <v-card class="mb-8 feature-card elevation-2" rounded="lg">
+          <div class="feature-header primary">
+            <v-icon size="large" class="feature-icon">mdi-web</v-icon>
+            <h2 class="text-h5 font-weight-medium">Dostupná prostředí</h2>
+          </div>
+          <v-card-text class="pa-5">
+            <p class="mb-4 text-body-1">Tato aplikace je dostupná online na následujících platformách:</p>
+
+            <div class="d-flex justify-space-around flex-wrap gap-4">
+              <v-card width="250" class="environment-card pa-4 text-center elevation-2" rounded="lg">
+                <v-avatar size="56" class="mb-3 bg-primary-lighten-5">
+                  <v-icon color="primary" size="36">mdi-github</v-icon>
+                </v-avatar>
+                <h3 class="text-h6 mb-2">GitHub Pages</h3>
+                <p class="text-body-2 mb-4">Veřejně přístupná verze aplikace hostovaná na GitHub Pages</p>
+                <v-btn color="primary" variant="outlined" class="px-6" href="#" target="_blank" prepend-icon="mdi-open-in-new">Otevřít aplikaci</v-btn>
+              </v-card>
+
+              <v-card width="250" class="environment-card pa-4 text-center elevation-2" rounded="lg">
+                <v-avatar size="56" class="mb-3 bg-amber-lighten-5">
+                  <v-icon color="amber-darken-2" size="36">mdi-school</v-icon>
+                </v-avatar>
+                <h3 class="text-h6 mb-2">Server Akela</h3>
+                <p class="text-body-2 mb-4">Verze aplikace hostovaná na školním serveru Mendelu</p>
+                <v-btn color="amber-darken-2" variant="outlined" class="px-6" href="#" target="_blank" prepend-icon="mdi-open-in-new">Otevřít na Akela</v-btn>
+              </v-card>
+
+              <v-card width="250" class="environment-card pa-4 text-center elevation-2" rounded="lg">
+                <v-avatar size="56" class="mb-3 bg-indigo-lighten-5">
+                  <v-icon color="indigo" size="36">mdi-source-repository</v-icon>
+                </v-avatar>
+                <h3 class="text-h6 mb-2">Zdrojový kód</h3>
+                <p class="text-body-2 mb-4">Kompletní zdrojový kód aplikace na GitHubu</p>
+                <v-btn color="indigo" variant="outlined" class="px-6" href="#" target="_blank" prepend-icon="mdi-github">Zobrazit kód</v-btn>
+              </v-card>
+            </div>
           </v-card-text>
         </v-card>
 
