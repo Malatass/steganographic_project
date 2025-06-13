@@ -647,3 +647,83 @@ export async function revealImageFromImageMSB(canvas, bitsPerChannel = 1) {
   }
   return new ImageData(outData, canvas.width, canvas.height);
 }
+
+/**
+ * Ukrytí obrázku do obrázku pomocí metody barevné podobnosti (Color Similarity Steganography)
+ * Pro každý pixel nosiče najde nejbližší barvu, která kóduje požadované bity tajného obrázku.
+ * Nejlépe funguje pro šedotónové obrázky, ale lze použít i pro barevné.
+ * @param {HTMLCanvasElement} baseCanvas - Plátno s originálním (nosným) obrázkem
+ * @param {HTMLCanvasElement} secretCanvas - Plátno s tajným obrázkem (musí mít stejnou velikost)
+ * @param {number} bitsPerChannel - Počet bitů použitých na jeden kanál (1-3, výchozí 1)
+ * @return {ImageData} - ImageData s ukrytým obrázkem
+ */
+export async function hideImageInImageColorSimilarity(baseCanvas, secretCanvas, bitsPerChannel = 1) {
+  if (bitsPerChannel < 1 || bitsPerChannel > 3) {
+    throw new Error('Počet bitů na kanál musí být mezi 1 a 3');
+  }
+  if (baseCanvas.width !== secretCanvas.width || baseCanvas.height !== secretCanvas.height) {
+    throw new Error('Obrázky musí mít stejnou velikost pro Color Similarity steganografii.');
+  }
+  const baseCtx = baseCanvas.getContext('2d');
+  const secretCtx = secretCanvas.getContext('2d');
+  const baseImageData = baseCtx.getImageData(0, 0, baseCanvas.width, baseCanvas.height);
+  const secretImageData = secretCtx.getImageData(0, 0, secretCanvas.width, secretCanvas.height);
+  const baseData = baseImageData.data;
+  const secretData = secretImageData.data;
+  const outData = new Uint8ClampedArray(baseData.length);
+  const mask = getMask(bitsPerChannel); // e.g. 0b00000111 for 3 bits
+  const invMask = ~mask & 0xff;
+
+  // For each pixel, for each channel, set the LSBs to the MSBs of the secret, but adjust the value to be as close as possible to the original
+  for (let i = 0; i < baseData.length; i += 4) {
+    for (let j = 0; j < 3; j++) { // RGB only
+      const baseVal = baseData[i + j];
+      const secretVal = secretData[i + j];
+      // Get the bits to encode from the secret (n MSB)
+      const secretBits = (secretVal >> (8 - bitsPerChannel)) & mask;
+      // Now, for all possible values that have these bits in the LSB, find the one closest to baseVal
+      let bestVal = baseVal;
+      let minDist = 256;
+      for (let k = 0; k < 256; k++) {
+        if ((k & mask) === secretBits) {
+          const dist = Math.abs(k - baseVal);
+          if (dist < minDist) {
+            minDist = dist;
+            bestVal = k;
+            if (dist === 0) break; // perfect match
+          }
+        }
+      }
+      outData[i + j] = bestVal;
+    }
+    // Alpha channel
+    outData[i + 3] = baseData[i + 3];
+  }
+  return new ImageData(outData, baseCanvas.width, baseCanvas.height);
+}
+
+/**
+ * Odkrytí obrázku z obrázku ukrytého metodou barevné podobnosti (Color Similarity Steganography)
+ * @param {HTMLCanvasElement} canvas - Plátno s obrázkem obsahujícím ukrytý obrázek
+ * @param {number} bitsPerChannel - Počet bitů použitých na jeden kanál (1-3, výchozí 1)
+ * @return {ImageData} - Odkrytý obrázek jako ImageData
+ */
+export async function revealImageFromImageColorSimilarity(canvas, bitsPerChannel = 1) {
+  if (bitsPerChannel < 1 || bitsPerChannel > 3) {
+    throw new Error('Počet bitů na kanál musí být mezi 1 a 3');
+  }
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const outData = new Uint8ClampedArray(data.length);
+  const mask = getMask(bitsPerChannel);
+  for (let i = 0; i < data.length; i += 4) {
+    for (let j = 0; j < 3; j++) {
+      // Extract the n LSBs and shift to MSB
+      const lsb = data[i + j] & mask;
+      outData[i + j] = lsb << (8 - bitsPerChannel);
+    }
+    outData[i + 3] = 255;
+  }
+  return new ImageData(outData, canvas.width, canvas.height);
+}

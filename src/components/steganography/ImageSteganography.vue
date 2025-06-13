@@ -78,7 +78,8 @@
                         <strong>Rozměry:</strong>
                         {{ carrierImageInfo.width }} × {{ carrierImageInfo.height }} px
                       </p>
-                      <p>
+
+                      <p v-if="selectedImageStegoMethod.value ==='lsb' ">
                         <strong>Maximální kapacita:</strong>
                         {{ formatCapacity(carrierImageInfo.capacity) }}
                       </p>
@@ -250,6 +251,33 @@
               <v-radio label="Automatická detekce" value="auto"></v-radio>
             </v-radio-group>
 
+            
+            <template v-if="revealMode === 'image'">
+              <v-select
+                v-model="selectedRevealImageStegoMethod"
+                :items="imageStegoMethods"
+                item-title="name"
+                item-value="value"
+                return-object
+                label="Vyberte metodu odkrývání obrázku"
+                outlined
+                class="mb-4 steg-select"
+                @update:model-value="resetOutputs"
+                variant="outlined"
+                :menu-props="{ width: 'auto' }"
+              >
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props" class="steg-list-item">
+                    <v-list-item-subtitle class="method-description">{{ item.raw.description }}</v-list-item-subtitle>
+                  </v-list-item>
+                </template>
+              </v-select>
+              <v-alert v-if="selectedRevealImageStegoMethod" color="info" class="mb-4" density="comfortable" variant="tonal">
+                <strong>{{ selectedRevealImageStegoMethod.name }}:</strong>
+                {{ selectedRevealImageStegoMethod.description }}
+              </v-alert>
+            </template>
+
             <!-- Nastavení kvality / počet bitů -->
             <div class="mb-4" v-if="!(revealMode === 'image' && selectedRevealImageStegoMethod.value === 'msb')">
               <label>Počet bitů na kanál (1-3):</label>
@@ -296,32 +324,6 @@
                 @click:append="showDecryptPassword = !showDecryptPassword"
               ></v-text-field>
             </div>
-
-            <template v-if="revealMode === 'image'">
-              <v-select
-                v-model="selectedRevealImageStegoMethod"
-                :items="imageStegoMethods"
-                item-title="name"
-                item-value="value"
-                return-object
-                label="Vyberte metodu odkrývání obrázku"
-                outlined
-                class="mb-4 steg-select"
-                @update:model-value="resetOutputs"
-                variant="outlined"
-                :menu-props="{ width: 'auto' }"
-              >
-                <template v-slot:item="{ props, item }">
-                  <v-list-item v-bind="props" class="steg-list-item">
-                    <v-list-item-subtitle class="method-description">{{ item.raw.description }}</v-list-item-subtitle>
-                  </v-list-item>
-                </template>
-              </v-select>
-              <v-alert v-if="selectedRevealImageStegoMethod" color="info" class="mb-4" density="comfortable" variant="tonal">
-                <strong>{{ selectedRevealImageStegoMethod.name }}:</strong>
-                {{ selectedRevealImageStegoMethod.description }}
-              </v-alert>
-            </template>
 
             <v-btn color="secondary" @click="performRevealFromImage" :disabled="!stegoFile || isProcessing" :loading="isProcessing">Odkrýt informace</v-btn>
           </v-card-text>
@@ -389,7 +391,9 @@
     generateEnhancedVisualization,
     peekInitialTextFromImage,
     hideImageInImageMSB,
-    revealImageFromImageMSB
+    revealImageFromImageMSB,
+    hideImageInImageColorSimilarity,
+    revealImageFromImageColorSimilarity
   } from '../../stegonography/image';
   import CryptoJS from 'crypto-js';
 
@@ -405,6 +409,11 @@
       name: 'MSB-in-LSB (n MSB do n LSB)',
       value: 'msb',
       description: 'Pouze n nejvýznamnějších bitů každého kanálu tajného obrázku je ukryto do n nejméně významných bitů nosného obrázku. (Obrázky musí mít stejnou velikost, výsledek je vizuální aproximace tajného obrázku.)'
+    },
+    {
+      name: 'Barevná podobnost (Color Similarity)',
+      value: 'color-similarity',
+      description: 'Ukrytí dat změnou barvy na nejbližší možnou hodnotu, která kóduje požadované bity. Vizuálně velmi nenápadné pro šedotónové obrázky.'
     }
   ];
   const selectedImageStegoMethod = ref(imageStegoMethods[0]);
@@ -792,6 +801,8 @@
         const secretOriginalCanvas = secretImageInfo.value.originalCanvas;
         if (selectedImageStegoMethod.value.value === 'msb') {
           stegoImageData = await hideImageInImageMSB(originalCanvas, secretOriginalCanvas, bitsPerChannel.value);
+        } else if (selectedImageStegoMethod.value.value === 'color-similarity') {
+          stegoImageData = await hideImageInImageColorSimilarity(originalCanvas, secretOriginalCanvas, bitsPerChannel.value);
         } else {
           stegoImageData = await hideImageInImage(originalCanvas, secretOriginalCanvas, bitsPerChannel.value);
         }
@@ -1035,6 +1046,8 @@
       let revealedImageData;
       if (selectedRevealImageStegoMethod.value.value === 'msb') {
         revealedImageData = await revealImageFromImageMSB(canvas, revealBitsPerChannel.value);
+      } else if (selectedRevealImageStegoMethod.value.value === 'color-similarity') {
+        revealedImageData = await revealImageFromImageColorSimilarity(canvas, revealBitsPerChannel.value);
       } else {
         revealedImageData = await revealImageFromImage(canvas, revealBitsPerChannel.value);
       }
