@@ -43,7 +43,7 @@
               </v-alert>
             </template>
             <!-- Nastavení kvality / počet bitů -->
-            <div class="mb-4" v-if="!(hideMode === 'image' && selectedImageStegoMethod.value === 'msb')">
+            <div class="mb-4" v-if="hideMode === 'image' && selectedImageStegoMethod.value === 'lsb'">
               <label>Počet bitů na kanál (1-3):</label>
               <v-slider v-model="bitsPerChannel" :min="1" :max="3" :step="1" thumb-label class="mt-1"></v-slider>
               <div class="text-caption">
@@ -279,7 +279,7 @@
             </template>
 
             <!-- Nastavení kvality / počet bitů -->
-            <div class="mb-4" v-if="!(revealMode === 'image' && selectedRevealImageStegoMethod.value === 'msb')">
+            <div class="mb-4" v-if="hideMode === 'image' && selectedImageStegoMethod.value === 'lsb'">
               <label>Počet bitů na kanál (1-3):</label>
               <v-slider v-model="revealBitsPerChannel" :min="1" :max="3" :step="1" thumb-label class="mt-1"></v-slider>
               <div class="text-caption">Pro úspěšné odkrytí dat musí být nastavený stejný počet bitů jako při ukrývání.</div>
