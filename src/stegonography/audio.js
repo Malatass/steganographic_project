@@ -1,96 +1,133 @@
 const END_OF_MESSAGE_DELIMITER_BINARY = '0000000000000000'; // 16 zeros, 2 bytes
 const MAGIC_HEADER = 'STEGANOAUDIO1';
-const MAGIC_HEADER_BASE64 = btoa(MAGIC_HEADER);
 
 /**
- * Converts text to Base64, then to binary string.
- * This adds an extra layer of encoding that makes the data more robust.
+ * Converts text to a binary string representation of its UTF-8 encoded, Base64 version.
  * @param {string} text The input text.
  * @returns {string} The binary string representation.
  */
 function textToBinary(text) {
-  // First convert text to Base64
-  const base64 = btoa(text);
+  // Step 1: Encode text to UTF-8 bytes
+  const encoder = new TextEncoder();
+  const utf8Bytes = encoder.encode(text); // Uint8Array
 
-  // Then convert Base64 string to binary
-  return Array.from(base64)
+  // Step 2: Convert UTF-8 bytes to a Base64 string
+  // First, convert Uint8Array to a string where each character's code is a byte value
+  let binaryStringForBtoa = '';
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binaryStringForBtoa += String.fromCharCode(utf8Bytes[i]);
+  }
+  const base64Encoded = btoa(binaryStringForBtoa); // base64Encoded now contains only A-Z, a-z, 0-9, +, /, =
+
+  // Step 3: Convert the Base64 string to a binary string (sequence of '0' and '1')
+  return Array.from(base64Encoded)
     .map((char) => char.charCodeAt(0).toString(2).padStart(8, '0'))
     .join('');
 }
 
 /**
- * Converts a binary string back to text via Base64.
- * @param {string} binary The input binary string.
- * @returns {string} The decoded text.
+ * Converts a binary string (representing UTF-8 encoded, Base64 data) back to text.
+ * @param {string} binary The input binary string (sequence of '0's and '1's).
+ * @returns {string|null} The decoded text, or null if decoding fails.
  */
 function binaryToText(binary) {
-  let base64 = '';
-
-  // Convert binary to Base64 string
+  let base64Chars = '';
+  // Step 1: Convert binary string (sequence of '0'/'1') back to Base64 string
   for (let i = 0; i < binary.length; i += 8) {
     const byte = binary.substring(i, i + 8);
     if (byte.length === 8) {
-      base64 += String.fromCharCode(parseInt(byte, 2));
+      base64Chars += String.fromCharCode(parseInt(byte, 2));
+    } else {
+      // This might happen if the binary string length is not a multiple of 8.
+      // Consider if this should be an error or handled differently.
+      console.warn('[AUDIO DECODE] Encountered partial byte at end of binary string:', byte);
     }
   }
 
   try {
-    // Decode the Base64 back to text
-    return atob(base64);
+    // Step 2: Decode Base64 string to "binary string" (string of original byte values)
+    const decodedBinaryString = atob(base64Chars); // Can throw InvalidCharacterError
+
+    // Step 3: Convert "binary string" to Uint8Array
+    const bytes = new Uint8Array(decodedBinaryString.length);
+    for (let i = 0; i < decodedBinaryString.length; i++) {
+      bytes[i] = decodedBinaryString.charCodeAt(i);
+    }
+
+    // Step 4: Decode Uint8Array (as UTF-8) back to original text
+    const decoder = new TextDecoder('utf-8', { fatal: true }); // fatal: true throws on invalid UTF-8
+    return decoder.decode(bytes);
   } catch (e) {
-    console.error('Error decoding Base64:', e);
-    return base64; // Return the Base64 if decoding fails
+    console.error(`Error in binaryToText: ${e.message}. Problematic Base64 string (or part of it): "${base64Chars.substring(0, 100)}..."`);
+    return null; // Indicate failure
   }
 }
 
 /**
- * Hides a message within an AudioBuffer using LSB steganography.
- * @param {AudioBuffer} originalAudioBuffer The original audio data.
- * @param {string} message The message to hide.
- * @returns {AudioBuffer} A new AudioBuffer with the hidden message, or null if message is too long.
+ * Skrývá zprávu v rámci AudioBuffer pomocí LSB steganografie.
+ * @param {AudioBuffer} originalAudioBuffer Původní audio data.
+ * @param {string} message Zpráva k ukrytí.
+ * @returns {AudioBuffer} Nový AudioBuffer s ukrytou zprávou, nebo null pokud je zpráva příliš dlouhá.
  */
 export function hideInAudio(originalAudioBuffer, message) {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const messageWithHeader = MAGIC_HEADER + message;
   const messageBinary = textToBinary(messageWithHeader) + END_OF_MESSAGE_DELIMITER_BINARY;
 
-  const channelData = originalAudioBuffer.getChannelData(0); // Use the first channel
+  const channelData = originalAudioBuffer.getChannelData(0); // Použít první kanál
   const numSamples = channelData.length;
 
-  if (messageBinary.length > numSamples) {
-    console.error('[AUDIO ENCODE] Message is too long to hide in this audio. Length:', messageBinary.length, 'Samples available:', numSamples);
+  // Vynechání prvních 200 vzorků + délka zprávy pro kontrolu kapacity
+  const startOffset = 200;
+  if (messageBinary.length > numSamples - startOffset) {
+    console.error(
+      '[AUDIO ENCODE] Zpráva je příliš dlouhá pro ukrytí v tomto audiu. Délka:',
+      messageBinary.length,
+      'Dostupné vzorky po offsetu:',
+      numSamples - startOffset
+    );
     return null;
   }
 
-  // Create a new AudioBuffer to store the modified data
+  // Vytvoření nového AudioBuffer pro uložení upravených dat
   const stegoAudioBuffer = audioContext.createBuffer(originalAudioBuffer.numberOfChannels, originalAudioBuffer.length, originalAudioBuffer.sampleRate);
 
-  // Copy original data to all channels of the new buffer
+  // Kopírování původních dat do všech kanálů nového bufferu
   for (let i = 0; i < originalAudioBuffer.numberOfChannels; i++) {
     stegoAudioBuffer.copyToChannel(originalAudioBuffer.getChannelData(i), i);
   }
 
-  const newChannelData = stegoAudioBuffer.getChannelData(0); // Modify the first channel
-
-  // Skip the first 200 samples to avoid header modifications that might be more noticeable
-  const startOffset = 200;
+  const newChannelData = stegoAudioBuffer.getChannelData(0); // Úprava prvního kanálu
 
   for (let i = 0; i < messageBinary.length; i++) {
     const bit = parseInt(messageBinary[i], 10);
-
-    // Add offset to avoid header area
     const sampleIndex = i + startOffset;
 
     if (sampleIndex < numSamples) {
       const floatSample = newChannelData[sampleIndex];
+      let intSample;
 
-      // Quantize to 16-bit range, modify LSB, then de-quantize
-      let intSample = Math.round(floatSample * 32767);
+      // Přesnější kvantizace s ohledem na asymetrický rozsah 16-bit PCM
+      if (floatSample < 0) {
+        intSample = Math.round(floatSample * 32768);
+      } else {
+        intSample = Math.round(floatSample * 32767);
+      }
+      // Ořezání na platný 16-bitový rozsah
+      intSample = Math.max(-32768, Math.min(32767, intSample));
 
-      // Clear LSB and set the new bit
+      // Vyčištění LSB a nastavení nového bitu
       intSample = (intSample & 0xfffe) | bit;
 
-      newChannelData[sampleIndex] = Math.max(-1.0, Math.min(1.0, intSample / 32767));
+      // De-kvantizace zpět na float
+      let newFloatSample;
+      if (intSample < 0) {
+        newFloatSample = intSample / 32768.0;
+      } else {
+        newFloatSample = intSample / 32767.0;
+      }
+      // Zajistit, že hodnota zůstane v rozsahu [-1.0, 1.0]
+      newChannelData[sampleIndex] = Math.max(-1.0, Math.min(1.0, newFloatSample));
     }
   }
 
@@ -98,48 +135,65 @@ export function hideInAudio(originalAudioBuffer, message) {
 }
 
 /**
- * Reveals a hidden message from an AudioBuffer using LSB steganography.
- * @param {AudioBuffer} stegoAudioBuffer The AudioBuffer containing the hidden message.
- * @returns {string} The revealed message, or null if no message is found or header is missing.
+ * Odkrývá skrytou zprávu z AudioBuffer pomocí LSB steganografie.
+ * @param {AudioBuffer} stegoAudioBuffer AudioBuffer obsahující skrytou zprávu.
+ * @returns {string} Odkrytá zpráva, nebo null pokud nebyla zpráva nalezena nebo chybí hlavička.
  */
 export function revealFromAudio(stegoAudioBuffer) {
-  const channelData = stegoAudioBuffer.getChannelData(0); // Use the first channel
+  const channelData = stegoAudioBuffer.getChannelData(0); // Použít první kanál
   const numSamples = channelData.length;
   let revealedBits = '';
   let bitBuffer = '';
 
-  // Skip the first 200 samples to match the hide function
   const startOffset = 200;
 
   for (let i = startOffset; i < numSamples; i++) {
     const floatSample = channelData[i];
-    const intSample = Math.round(floatSample * 32767);
+    let intSample;
+
+    // Přesnější kvantizace s ohledem na asymetrický rozsah 16-bit PCM
+    if (floatSample < 0) {
+      intSample = Math.round(floatSample * 32768);
+    } else {
+      intSample = Math.round(floatSample * 32767);
+    }
+    // Ořezání na platný 16-bitový rozsah
+    intSample = Math.max(-32768, Math.min(32767, intSample));
+
     const lsb = intSample & 1;
 
     revealedBits += lsb.toString();
     bitBuffer += lsb.toString();
 
     if (bitBuffer.length > END_OF_MESSAGE_DELIMITER_BINARY.length) {
-      bitBuffer = bitBuffer.substring(1); // Keep buffer size same as delimiter
+      bitBuffer = bitBuffer.substring(1); // Udržení velikosti bufferu stejné jako oddělovač
     }
 
     if (bitBuffer === END_OF_MESSAGE_DELIMITER_BINARY) {
-      // Remove delimiter from revealedBits
-      const messageWithoutDelimiter = revealedBits.substring(0, revealedBits.length - END_OF_MESSAGE_DELIMITER_BINARY.length);
-      const decoded = binaryToText(messageWithoutDelimiter);
-      if (!decoded) {
-        console.warn('[AUDIO DECODE] Decoded message is empty. Possibly lost due to file format or corruption.');
+      // Odstranění oddělovače z revealedBits
+      const messageBinaryWithoutDelimiter = revealedBits.substring(0, revealedBits.length - END_OF_MESSAGE_DELIMITER_BINARY.length);
+
+      const decodedTextWithHeader = binaryToText(messageBinaryWithoutDelimiter);
+
+      if (!decodedTextWithHeader) {
+        console.warn(
+          '[AUDIO DECODE] Failed to decode binary data to text. The data might be corrupted, not valid Base64/UTF-8, or the LSBs were not retrieved correctly.'
+        );
         return null;
       }
-      if (!decoded.startsWith(MAGIC_HEADER)) {
-        console.warn('[AUDIO DECODE] Magic header not found. This audio likely does not contain a valid hidden message. Decoded:', decoded);
+
+      if (!decodedTextWithHeader.startsWith(MAGIC_HEADER)) {
+        console.warn(
+          `[AUDIO DECODE] Magic header not found. Expected "${MAGIC_HEADER}" but processing yielded data starting differently. Decoded data (start): "${decodedTextWithHeader.substring(0, MAGIC_HEADER.length + 10)}..."`
+        );
         return null;
       }
-      const revealed = decoded.substring(MAGIC_HEADER.length);
-      return revealed;
+
+      const revealedMessage = decodedTextWithHeader.substring(MAGIC_HEADER.length);
+      return revealedMessage;
     }
   }
 
-  console.warn('[AUDIO DECODE] End of message delimiter not found. No message extracted.');
-  return null; // Delimiter not found
+  console.warn('[AUDIO DECODE] Oddělovač konce zprávy nebyl nalezen. Žádná zpráva nebyla extrahována.');
+  return null; // Oddělovač nebyl nalezen
 }

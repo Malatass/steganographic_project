@@ -3,6 +3,7 @@
   <div class="algorithm-selector">
     <h2 class="mb-6 app-heading">Vyberte algoritmus steganografie</h2>
     <div class="algorithm-grid">
+      <!-- Karta pro textovou steganografii -->
       <v-card @click="$emit('select-algorithm', 'text')" class="algorithm-card" elevation="3">
         <div class="algorithm-card-header">
           <v-icon size="large" class="card-icon" color="secondary">mdi-format-text</v-icon>
@@ -11,6 +12,7 @@
         <v-card-text class="algorithm-description">Ukrytí nebo odkrytí zprávy v běžném textu</v-card-text>
       </v-card>
 
+      <!-- Karta pro obrazovou steganografii -->
       <v-card @click="$emit('select-algorithm', 'image')" class="algorithm-card" elevation="3">
         <div class="algorithm-card-header">
           <v-icon size="large" class="card-icon" color="secondary">mdi-image</v-icon>
@@ -19,6 +21,7 @@
         <v-card-text class="algorithm-description">Ukrytí nebo odkrytí zprávy v obrázkových souborech</v-card-text>
       </v-card>
 
+      <!-- Karta pro audio steganografii -->
       <v-card @click="$emit('select-algorithm', 'audio')" class="algorithm-card" elevation="3">
         <div class="algorithm-card-header">
           <v-icon size="large" class="card-icon" color="secondary">mdi-music-note</v-icon>
@@ -27,6 +30,7 @@
         <v-card-text class="algorithm-description">Ukrytí nebo odkrytí zprávy v audio souborech</v-card-text>
       </v-card>
 
+      <!-- Karta pro video steganografii -->
       <v-card @click="$emit('select-algorithm', 'video')" class="algorithm-card" elevation="3">
         <div class="algorithm-card-header">
           <v-icon size="large" class="card-icon" color="secondary">mdi-video</v-icon>
@@ -39,6 +43,7 @@
 </template>
 
 <script setup>
+  // Definice události pro výběr algoritmu
   defineEmits(['select-algorithm']);
 </script>
 

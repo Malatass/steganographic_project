@@ -1,76 +1,76 @@
-# Steganography Application
+# Aplikace pro Steganografii
 
-This project is a modern steganography application developed as a school assignment for the ENC-K - Kryptologie course at Mendel University in Brno. The application allows users to hide and reveal information in various types of media: text, images, audio, and video.
+Tento projekt je moderní steganografická aplikace vyvinutá jako školní úkol pro předmět ENC-K - Kryptologie na Mendelově univerzitě v Brně. Aplikace umožňuje uživatelům skrývat a odkrývat informace v různých typech médií: text, obrázky, audio a video.
 
-## About the Project
+## O projektu
 
-This application was created as a fulfillment of the course requirement to implement a non-trivial application using steganographic methods in a programming language suitable for the task. While JavaScript might not be the most efficient language for implementing steganographic algorithms (compared to languages like Python), it was chosen to explore a different approach than what is commonly used by others in the course.
+Tato aplikace byla vytvořena jako splnění požadavku kurzu implementovat netriviální aplikaci využívající steganografické metody v programovacím jazyce vhodném pro tento úkol. Ačkoliv JavaScript nemusí být nejefektivnějším jazykem pro implementaci steganografických algoritmů (ve srovnání například s Pythonem), byl zvolen pro prozkoumání jiného přístupu, než je běžně používán ostatními v kurzu.
 
-## Main Features
+## Hlavní funkce
 
-- **Multiple Steganographic Methods**: The application supports various methods for each media type:
+- **Různé steganografické metody**: Aplikace podporuje různé metody pro každý typ média:
 
-  - **Text**: Delimiters, Base64 + Delimiters, White Spaces, Zero-width characters, Bacon cipher, Multi-tag Bacon cipher, Similar letters, Czech conjunctions, Word spacing
-  - **Images**: LSB (Least Significant Bit) steganography with customizable bit depth
-  - **Audio**: LSB audio steganography in WAV files
-  - **Video**: Frame-based steganography with individual frame extraction and processing
+  - **Text**: Oddělovače, Base64 + Oddělovače, Bílé znaky, Znaky s nulovou šířkou, Baconova šifra, Multi-tag Baconova šifra, Podobná písmena, České spojky, Rozestupy slov
+  - **Obrázky**: LSB (Least Significant Bit) steganografie s nastavitelnou bitovou hloubkou
+  - **Audio**: LSB audio steganografie ve WAV souborech
+  - **Video**: Steganografie založená na snímcích s extrakcí a zpracováním jednotlivých snímků
 
-- **Encryption Support**: Option to encrypt hidden messages using AES-128 or AES-256 (except for audio and video)
-- **Status Messages and Visualizations**: The application displays graphical outputs, previews, and success or error notifications
-- **Result Downloads**: Resulting images, audio, and video frames can be downloaded with custom names
-- **Clipboard and Import Support**: Support for pasting and importing text/files from clipboard or file system
+- **Podpora šifrování**: Možnost šifrovat skryté zprávy pomocí AES-128 nebo AES-256 (kromě audia a videa)
+- **Stavové zprávy a vizualizace**: Aplikace zobrazuje grafické výstupy, náhledy a oznámení o úspěchu nebo chybě
+- **Stahování výsledků**: Výsledné obrázky, audio a video snímky lze stáhnout s vlastními názvy
+- **Podpora schránky a importu**: Podpora pro vkládání a import textu/souborů ze schránky nebo souborového systému
 
-## Important Limitations and Warnings
+## Důležitá omezení a upozornění
 
-- **UTF-8 and Czech Character Support**: Some methods (especially text-based) fully support UTF-8 and Czech characters, while others (e.g., audio, some image methods) only support ASCII. A warning is displayed when entering Czech characters.
-- **Automatic Image Resizing**: When hiding an image within another image, the secret image is automatically resized if it's too large. This feature may not always be 100% reliable and could result in loss of detail.
-- **Audio and Video**: If you download audio with a hidden message and upload it again, the message may be lost due to compression (especially with MP3). For best results, use WAV. With low-quality or highly compressed video and audio, it may not be possible to successfully hide or reveal a message.
+- **Podpora UTF-8 a českých znaků**: Některé metody (zejména textové) plně podporují UTF-8 a české znaky, zatímco jiné (např. audio, některé obrazové metody) podporují pouze ASCII. Při zadávání českých znaků se zobrazí upozornění.
+- **Automatická změna velikosti obrázku**: Při skrývání obrázku v jiném obrázku je tajný obrázek automaticky zmenšen, pokud je příliš velký. Tato funkce nemusí být vždy 100% spolehlivá a může dojít ke ztrátě detailů.
+- **Audio a video**: Pokud stáhnete audio se skrytou zprávou a znovu jej nahrajete, zpráva může být ztracena kvůli kompresi (zejména u MP3). Pro nejlepší výsledky používejte WAV. U nízkokvalitního nebo vysoce komprimovaného videa a audia nemusí být možné úspěšně skrýt nebo odkrýt zprávu.
 
-## Technologies
+## Technologie
 
-- **Vue 3** – modern framework for building user interfaces
-- **Vite** – fast development and build tool
-- **Vuetify** – component library for modern design
+- **Vue 3** – moderní framework pro budování uživatelských rozhraní
+- **Vite** – rychlý vývojový a sestavovací nástroj
+- **Vuetify** – komponentová knihovna pro moderní design
 
-## Installation
+## Instalace
 
-1. Clone the repository:
+1. Naklonujte repozitář:
    ```
    git clone <repo-url>
    ```
-2. Navigate to the project directory:
+2. Přejděte do adresáře projektu:
    ```
    cd steganographic_project
    ```
-3. Install dependencies:
+3. Nainstalujte závislosti:
    ```
    npm install
    ```
 
-## Running the Application
+## Spuštění aplikace
 
-To run in development mode:
+Pro spuštění ve vývojovém režimu:
 
 ```
 npm run dev
 ```
 
-## Production Build
+## Produkční sestavení
 
-To create a production build:
+Pro vytvoření produkčního sestavení:
 
 ```
 npm run build
 ```
 
-## Contributing
+## Přispívání
 
-Suggestions for improvements or bug fixes are welcome in the form of pull requests.
+Návrhy na vylepšení nebo opravy chyb jsou vítány ve formě pull requestů.
 
-## License
+## Licence
 
 MIT
 
-## Acknowledgements
+## Poděkování
 
-This project was developed as part of the ENC-K - Kryptologie course at Mendel University in Brno. Special thanks to the course instructors for their guidance and support.
+Tento projekt byl vyvinut jako součást kurzu ENC-K - Kryptologie na Mendelově univerzitě v Brně. Zvláštní poděkování patří vyučujícím za jejich vedení a podporu.

@@ -1379,10 +1379,17 @@
     transition: all 0.3s ease;
   }
 
+  .revealed-text {
+    margin-top: 1rem;
+  }
+
+  .v-card + .v-card {
+    margin-top: 2rem;
+  }
+
   .gap-2 {
     gap: 8px;
   }
-
   .revealed-text,
   .revealed-image {
     margin-top: 1rem;

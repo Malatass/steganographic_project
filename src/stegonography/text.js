@@ -179,7 +179,7 @@ function revealWithInvisibleChars(stegText) {
 
   const decoded = new TextDecoder().decode(new Uint8Array(bytes));
 
-  // Remove end marker
+  // Odstranění koncové značky
   const endMarkerIndex = decoded.indexOf('§');
   return endMarkerIndex !== -1 ? decoded.substring(0, endMarkerIndex) : decoded;
 }
@@ -702,7 +702,7 @@ function hideWithCzechConjunctions(originalText, secretMessage) {
 
 function revealFromCzechConjunctions(stegText) {
   // Find all potential comma places before Czech conjunctions
-  const czechCommaRegex = /\b(\w+)(,)?( )(a|ale|nebo|či|aby|proto|přece|protože)\b/g;
+  const czechCommaRegex = /\b(\w+)(,)?(a|ale|nebo|či|aby|proto|přece|protože)\b/g;
   let matches = [...stegText.matchAll(czechCommaRegex)];
 
   // Extract binary data from presence/absence of commas

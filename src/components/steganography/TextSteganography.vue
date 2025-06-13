@@ -1078,7 +1078,6 @@
     background-color: #f5f5f5;
   }
 
-  /* Přidáme styly pro správné zobrazení tagů ve výsledku */
   .bacon-result i {
     color: #2196f3;
   }

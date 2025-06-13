@@ -1,6 +1,6 @@
 <template>
   <div class="audio-steganography">
-    <v-tabs v-model="activeTab" class="mb-6" color="primary" @update:model-value="resetOutputs">
+    <v-tabs v-model="activeTab" class="mb-6" color="primary">
       <v-tab value="hide">Ukrýt zprávu</v-tab>
       <v-tab value="reveal">Odkrýt zprávu</v-tab>
     </v-tabs>
@@ -35,6 +35,7 @@
             <v-alert v-if="carrierAudioFile && carrierAudioFile.type === 'audio/mpeg'" type="warning" variant="tonal" class="mb-4">
               MP3 je ztrátový formát a může způsobit ztrátu ukrytých dat. Pro lepší výsledky doporučujeme použít formát WAV.
             </v-alert>
+
             <div class="mb-4">
               <div class="d-flex justify-space-between align-center mb-1">
                 <label>Text k ukrytí</label>
@@ -50,10 +51,7 @@
                 </div>
                 <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
               </div>
-              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
-                <strong>Poznámka:</strong>
-                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
-              </v-alert>
+
               <v-textarea
                 v-model="secretMessage"
                 rows="3"
@@ -65,6 +63,10 @@
                 :maxlength="carrierAudioInfo ? Math.floor((carrierAudioInfo.sampleRate * carrierAudioInfo.duration - 16) / 8) : 0"
                 counter
               ></v-textarea>
+              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
+                <strong>Poznámka:</strong>
+                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+              </v-alert>
             </div>
 
             <v-btn color="secondary" @click="performHideInAudio" :disabled="!carrierAudioFile || !secretMessage || isProcessing" :loading="isProcessing">
@@ -117,6 +119,7 @@
           <v-card-text>
             <div v-if="useInMemoryAudio" class="mb-4 pa-3 border rounded">
               <p><strong>Používání audia v paměti</strong></p>
+
               <div class="d-flex align-center">
                 <audio controls :src="stegoAudioUrl" class="w-100 mr-4"></audio>
                 <div>
@@ -229,23 +232,6 @@
     event.target.value = '';
   }
 
-  function resetOutputs() {
-    // Reset relevant fields when switching tabs or methods
-    stegoAudioUrl.value = '';
-    revealedMessage.value = '';
-    stegoAudioBufferInMemory.value = null;
-    if (activeTab.value === 'hide') {
-      stegoAudioFileForReveal.value = null;
-      stegoAudioBufferForReveal.value = null;
-    } else {
-      carrierAudioFile.value = null;
-      carrierAudioBuffer.value = null;
-      carrierAudioInfo.value = null;
-      secretMessage.value = '';
-    }
-    emit('show-message', { message: '', type: 'info' });
-  }
-
   async function loadAudioFileAsBuffer(file) {
     if (!file) return null;
     const arrayBuffer = await file.arrayBuffer();
@@ -258,7 +244,16 @@
   }
 
   async function onCarrierAudioSelected() {
+    // Reset states related to previous steganography operations or in-memory audio
     isProcessing.value = true;
+    stegoAudioUrl.value = '';
+    stegoAudioBufferInMemory.value = null;
+    revealedMessage.value = '';
+    useInMemoryAudio.value = false;
+    stegoAudioFileForReveal.value = null; // Clear file input on reveal tab
+    stegoAudioBufferForReveal.value = null; // Clear buffer for reveal tab
+    carrierAudioInfo.value = null; // Reset carrier info before loading new one
+
     carrierAudioBuffer.value = await loadAudioFileAsBuffer(carrierAudioFile.value);
     if (carrierAudioBuffer.value) {
       const buffer = carrierAudioBuffer.value;
@@ -325,12 +320,14 @@
   }
 
   function prepareStegoAudioForReveal() {
-    if (stegoAudioBufferInMemory.value) {
+    if (stegoAudioBufferInMemory.value && stegoAudioUrl.value /* Ensure URL is also set from hide op */) {
       stegoAudioBufferForReveal.value = stegoAudioBufferInMemory.value;
       useInMemoryAudio.value = true;
+      // stegoAudioUrl is already set from performHideInAudio
+
       activeTab.value = 'reveal'; // Switch to reveal tab
-      // Do NOT auto-decode, just prepare for user to click
-      stegoAudioFileForReveal.value = null;
+      revealedMessage.value = ''; // Clear any previous revealed message on the reveal tab
+
       emit('show-message', { message: 'Připraveno k odkrytí zprávy z aktuálně vygenerovaného audia.', type: 'info' });
     } else {
       emit('show-message', { message: 'Nejprve ukryjte zprávu pro použití této funkce.', type: 'warning' });
@@ -340,6 +337,9 @@
   function clearInMemoryAudio() {
     useInMemoryAudio.value = false;
     stegoAudioBufferForReveal.value = null;
+    stegoAudioUrl.value = ''; // Clear the URL
+    stegoAudioBufferInMemory.value = null; // Also clear the source buffer for hide tab's output
+    revealedMessage.value = ''; // Clear revealed message as context changes
     emit('show-message', { message: 'Režim audia v paměti zrušen. Můžete nyní načíst audio soubor.', type: 'info' });
   }
 
@@ -383,7 +383,8 @@
     const message = revealFromAudio(bufferToReveal);
     if (!message) {
       emit('show-message', {
-        message: 'Nepodařilo se odkrýt zprávu. Pravděpodobně byl použit nevhodný formát (např. MP3) nebo audio neobsahuje platnou ukrytou zprávu.',
+        message:
+          'Nepodařilo se odkrýt zprávu. Pravděpodobně byl použit nevhodný formát (např. MP3) nebo audio neobsahuje platnou ukrytou zprávu, nebo byla zpráva ztracena při kompresi při stahování audia.',
         type: 'warning'
       });
       revealedMessage.value = '';
@@ -490,13 +491,26 @@
 
   function hasNonLatinChars(text) {
     if (!text) return false;
-    // Checks for any non-ASCII character (including Czech)
+
     return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
 
-  // Add watcher for tab changes and reset logic
-  watch(activeTab, () => {
-    resetOutputs();
+  watch(activeTab, (newTab) => {
+    emit('show-message', { message: '', type: 'info' });
+    revealedMessage.value = '';
+
+    if (newTab === 'hide') {
+      stegoAudioFileForReveal.value = null;
+      stegoAudioBufferForReveal.value = null;
+    } else if (newTab === 'reveal') {
+      carrierAudioFile.value = null;
+      carrierAudioBuffer.value = null;
+      carrierAudioInfo.value = null;
+      secretMessage.value = '';
+      if (!useInMemoryAudio.value) {
+        stegoAudioUrl.value = '';
+      }
+    }
   });
 </script>
 
@@ -512,5 +526,17 @@
   }
   .w-100 {
     width: 100%;
+  }
+
+  .revealed-text {
+    margin-top: 1rem;
+  }
+
+  .v-card + .v-card {
+    margin-top: 2rem;
+  }
+
+  .gap-2 {
+    gap: 8px;
   }
 </style>

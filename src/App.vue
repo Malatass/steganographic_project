@@ -1,6 +1,7 @@
 <!-- filepath: e:\steganographic\steganographic_project\src\App.vue -->
 <template>
   <v-app>
+    <!-- Hlavní navigační lišta -->
     <v-app-bar app color="white" elevation="2">
       <v-container class="d-flex align-center px-2">
         <router-link to="/" class="text-decoration-none d-flex align-center">
@@ -11,10 +12,12 @@
       </v-container>
     </v-app-bar>
 
+    <!-- Hlavní obsah aplikace -->
     <v-main>
       <router-view />
     </v-main>
 
+    <!-- Patička aplikace -->
     <v-footer app class="pa-4 text-center" color="white">
       <v-container>
         <div class="text-body-2 text-secondary">&copy; {{ new Date().getFullYear() }} — Aplikace pro steganografii</div>
@@ -36,6 +39,4 @@
   .text-decoration-none {
     text-decoration: none !important;
   }
-
-
 </style>

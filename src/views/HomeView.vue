@@ -1,12 +1,21 @@
 <!-- filepath: e:\steganographic\steganographic_project\src\views\HomeView.vue -->
 <template>
-  <div class="home">
-    <div class="header-section">
-      <h1>Steganografie</h1>
-      <p>Vyberte algoritmus pro ukrývání nebo odkrývání informací</p>
-    </div>
-    <AlgorithmSelector @select-algorithm="handleAlgorithmSelect" />
-    <v-btn to="/features" variant="tonal" color="primary" class="mt-4" prepend-icon="mdi-information-outline">Přehled funkcí aplikace</v-btn>
+  <div class="home-view">
+    <!-- Úvodní stránka aplikace -->
+    <v-container>
+      <v-row>
+        <v-col cols="12">
+          <div class="home">
+            <div class="header-section">
+              <h1>Steganografie</h1>
+              <p>Vyberte algoritmus pro ukrývání nebo odkrývání informací</p>
+            </div>
+            <AlgorithmSelector @select-algorithm="handleAlgorithmSelect" />
+            <v-btn to="/features" variant="tonal" color="primary" class="mt-4" prepend-icon="mdi-information-outline">Přehled funkcí aplikace</v-btn>
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
   </div>
 </template>
 

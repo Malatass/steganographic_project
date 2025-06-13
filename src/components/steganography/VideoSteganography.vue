@@ -562,4 +562,15 @@
     max-height: 60px;
     border-radius: 4px;
   }
+  .revealed-text {
+    margin-top: 1rem;
+  }
+
+  .v-card + .v-card {
+    margin-top: 2rem;
+  }
+
+  .gap-2 {
+    gap: 8px;
+  }
 </style>
