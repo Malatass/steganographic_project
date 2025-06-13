@@ -17,8 +17,33 @@
               <v-radio label="Obrázek" value="image"></v-radio>
             </v-radio-group>
 
+            <template v-if="hideMode === 'image'">
+              <v-select
+                v-model="selectedImageStegoMethod"
+                :items="imageStegoMethods"
+                item-title="name"
+                item-value="value"
+                return-object
+                label="Vyberte metodu ukrývání obrázku"
+                outlined
+                class="mb-4 steg-select"
+                @update:model-value="resetOutputs"
+                :menu-props="{ width: 'auto' }"
+                variant="outlined"
+              >
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props" class="steg-list-item">
+                    <v-list-item-subtitle class="method-description">{{ item.raw.description }}</v-list-item-subtitle>
+                  </v-list-item>
+                </template>
+              </v-select>
+              <v-alert v-if="selectedImageStegoMethod" color="info" class="mb-4" density="comfortable" variant="tonal">
+                <strong>{{ selectedImageStegoMethod.name }}:</strong>
+                {{ selectedImageStegoMethod.description }}
+              </v-alert>
+            </template>
             <!-- Nastavení kvality / počet bitů -->
-            <div class="mb-4">
+            <div class="mb-4" v-if="!(hideMode === 'image' && selectedImageStegoMethod.value === 'msb')">
               <label>Počet bitů na kanál (1-3):</label>
               <v-slider v-model="bitsPerChannel" :min="1" :max="3" :step="1" thumb-label class="mt-1"></v-slider>
               <div class="text-caption">
@@ -62,7 +87,7 @@
                 </div>
               </div>
             </div>
-
+            
             <!-- Data pro ukrytí - text nebo obrázek -->
             <div v-if="hideMode === 'text'" class="mb-4">
               <div class="d-flex justify-space-between align-center mb-1">
@@ -81,6 +106,7 @@
               </div>
               <v-textarea v-model="secretText" rows="3" auto-grow outlined hide-details :counter="maxTextLength" variant="outlined"></v-textarea>
             </div>
+
             <div v-else class="mb-4">
               <label>Obrázek k ukrytí:</label>
               <v-file-input
@@ -105,11 +131,7 @@
                         <strong>Rozměry:</strong>
                         {{ secretImageInfo.width }} × {{ secretImageInfo.height }} px
                       </p>
-                      <p v-if="secretImageInfo.willFit" class="text-success">
-                        <v-icon size="small">mdi-check</v-icon>
-                        Obrázek se vejde do nosiče
-                      </p>
-                      <p v-else class="text-warning">
+                      <p v-if="selectedImageStegoMethod.value === 'lsb' && !secretImageInfo.willFit" class="text-warning">
                         <v-icon size="small">mdi-alert</v-icon>
                         Obrázek bude zmenšen, aby se vešel (automaticky)
                       </p>
@@ -229,7 +251,7 @@
             </v-radio-group>
 
             <!-- Nastavení kvality / počet bitů -->
-            <div class="mb-4">
+            <div class="mb-4" v-if="!(revealMode === 'image' && selectedRevealImageStegoMethod.value === 'msb')">
               <label>Počet bitů na kanál (1-3):</label>
               <v-slider v-model="revealBitsPerChannel" :min="1" :max="3" :step="1" thumb-label class="mt-1"></v-slider>
               <div class="text-caption">Pro úspěšné odkrytí dat musí být nastavený stejný počet bitů jako při ukrývání.</div>
@@ -274,6 +296,32 @@
                 @click:append="showDecryptPassword = !showDecryptPassword"
               ></v-text-field>
             </div>
+
+            <template v-if="revealMode === 'image'">
+              <v-select
+                v-model="selectedRevealImageStegoMethod"
+                :items="imageStegoMethods"
+                item-title="name"
+                item-value="value"
+                return-object
+                label="Vyberte metodu odkrývání obrázku"
+                outlined
+                class="mb-4 steg-select"
+                @update:model-value="resetOutputs"
+                variant="outlined"
+                :menu-props="{ width: 'auto' }"
+              >
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props" class="steg-list-item">
+                    <v-list-item-subtitle class="method-description">{{ item.raw.description }}</v-list-item-subtitle>
+                  </v-list-item>
+                </template>
+              </v-select>
+              <v-alert v-if="selectedRevealImageStegoMethod" color="info" class="mb-4" density="comfortable" variant="tonal">
+                <strong>{{ selectedRevealImageStegoMethod.name }}:</strong>
+                {{ selectedRevealImageStegoMethod.description }}
+              </v-alert>
+            </template>
 
             <v-btn color="secondary" @click="performRevealFromImage" :disabled="!stegoFile || isProcessing" :loading="isProcessing">Odkrýt informace</v-btn>
           </v-card-text>
@@ -339,11 +387,28 @@
     revealImageFromImage,
     generateDifferenceMap,
     generateEnhancedVisualization,
-    peekInitialTextFromImage
+    peekInitialTextFromImage,
+    hideImageInImageMSB,
+    revealImageFromImageMSB
   } from '../../stegonography/image';
   import CryptoJS from 'crypto-js';
 
   const emit = defineEmits(['show-message']);
+
+  const imageStegoMethods = [
+    {
+      name: 'Klasická LSB (všechny bity)',
+      value: 'lsb',
+      description: 'Klasická metoda: všechny bity tajného obrázku jsou postupně ukryty do nejméně významných bitů nosného obrázku. (Může zmenšit tajný obrázek, ale umožňuje přesnou rekonstrukci.)'
+    },
+    {
+      name: 'MSB-in-LSB (n MSB do n LSB)',
+      value: 'msb',
+      description: 'Pouze n nejvýznamnějších bitů každého kanálu tajného obrázku je ukryto do n nejméně významných bitů nosného obrázku. (Obrázky musí mít stejnou velikost, výsledek je vizuální aproximace tajného obrázku.)'
+    }
+  ];
+  const selectedImageStegoMethod = ref(imageStegoMethods[0]);
+  const selectedRevealImageStegoMethod = ref(imageStegoMethods[0]);
 
   // Download filename
   const showFileNameDialog = ref(false);
@@ -512,6 +577,35 @@
       const img = new Image();
       img.onload = async () => {
         if (!secretCanvas.value) return;
+
+        if (selectedImageStegoMethod.value.value === 'msb' && carrierImageInfo.value) {
+          if (img.width !== carrierImageInfo.value.width || img.height !== carrierImageInfo.value.height) {
+            // Create a new canvas with carrier size
+            const resizedCanvas = document.createElement('canvas');
+            resizedCanvas.width = carrierImageInfo.value.width;
+            resizedCanvas.height = carrierImageInfo.value.height;
+            const resizedCtx = resizedCanvas.getContext('2d');
+            // Draw the secret image scaled to fit the carrier
+            resizedCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, resizedCanvas.width, resizedCanvas.height);
+            // Update originalSecretCanvas and preview
+            secretCanvas.value.width = Math.min(300, resizedCanvas.width);
+            secretCanvas.value.height = Math.min(300, resizedCanvas.height);
+            const previewCtx = secretCanvas.value.getContext('2d');
+            previewCtx.clearRect(0, 0, secretCanvas.value.width, secretCanvas.value.height);
+            previewCtx.drawImage(resizedCanvas, 0, 0, secretCanvas.value.width, secretCanvas.value.height);
+            // Update info
+            secretImageInfo.value = {
+              width: resizedCanvas.width,
+              height: resizedCanvas.height,
+              size: resizedCanvas.width * resizedCanvas.height * 3,
+              willFit: true,
+              originalCanvas: resizedCanvas
+            };
+            // For preview
+            secretImagePreview.value = resizedCanvas.toDataURL();
+            return;
+          }
+        }
 
         // Nastavení canvas na velikost obrázku (max 300px pro náhled, zachování poměru stran)
         const maxWidth = 300;
@@ -696,7 +790,11 @@
         stegoImageData = await hideTextInImage(originalCanvas, textToHide, bitsPerChannel.value);
       } else {
         const secretOriginalCanvas = secretImageInfo.value.originalCanvas;
-        stegoImageData = await hideImageInImage(originalCanvas, secretOriginalCanvas, bitsPerChannel.value);
+        if (selectedImageStegoMethod.value.value === 'msb') {
+          stegoImageData = await hideImageInImageMSB(originalCanvas, secretOriginalCanvas, bitsPerChannel.value);
+        } else {
+          stegoImageData = await hideImageInImage(originalCanvas, secretOriginalCanvas, bitsPerChannel.value);
+        }
       }
 
       // Vytvoříme nový canvas pro výsledný obrázek
@@ -934,7 +1032,12 @@
 
     // Pomocná funkce pro zpracování obrázkového odkrývání
     async function processImageReveal(canvas) {
-      const revealedImageData = await revealImageFromImage(canvas, revealBitsPerChannel.value);
+      let revealedImageData;
+      if (selectedRevealImageStegoMethod.value.value === 'msb') {
+        revealedImageData = await revealImageFromImageMSB(canvas, revealBitsPerChannel.value);
+      } else {
+        revealedImageData = await revealImageFromImage(canvas, revealBitsPerChannel.value);
+      }
 
       // Kontrola, zda jsme získali platná data obrázku
       const headerBytes = new Uint8Array(revealedImageData.data.buffer, 0, Math.min(50, revealedImageData.data.length));
@@ -1291,6 +1394,8 @@
 
     return /[ěščřžýáíéúůĚŠČŘŽÝÁÍÉÚŮ]/i.test(text);
   }
+
+
 </script>
 
 <style scoped>
@@ -1312,70 +1417,82 @@
     line-height: 1.5;
   }
 
-  .image-steganography {
-    margin-bottom: 2rem;
+  .revealed-text {
+    margin-top: 1rem;
   }
-
-  .preview-canvas,
-  .stego-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-  }
-
-  .border {
-    border: 1px solid #e0e0e0;
-  }
-
-  .preview-container {
-    margin-bottom: 1.5rem;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .image-preview {
-    background-color: #f9f9f9;
-    padding: 1rem;
-    border-radius: 8px;
-  }
-
   .encryption-options,
   .decryption-options {
     border-radius: 8px;
     transition: all 0.3s ease;
   }
 
-  .revealed-text {
-    margin-top: 1rem;
+  .steg-select :deep(.v-field__input) {
+    padding: 12px 16px;
+  }
+
+  .steg-list-item {
+    padding: 12px 16px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .steg-list-item:hover {
+    background-color: rgba(121, 190, 21, 0.05);
+    border-left-color: #79be15;
+  }
+
+  .method-title {
+    color: #424242;
+    font-weight: 500;
+    margin-bottom: 4px;
+    font-size: 1rem;
+  }
+
+  .method-description {
+    color: #757575;
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  :deep(.v-list-item--active) {
+    background-color: rgba(121, 190, 21, 0.1);
+    border-left: 3px solid #79be15;
+  }
+
+  :deep(.v-list-item--active) .method-title {
+    color: #79be15;
+    font-weight: 600;
   }
 
   .v-card + .v-card {
     margin-top: 2rem;
   }
 
+  .bacon-result {
+    white-space: pre-wrap;
+    font-family: monospace;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+  }
+
+  .bacon-result i {
+    color: #2196f3;
+  }
+
+  .bacon-result b {
+    color: #f44336;
+  }
+
+  .bacon-result u {
+    color: #4caf50;
+    text-decoration-style: wavy;
+  }
+
   .gap-2 {
     gap: 8px;
-  }
-  .revealed-text,
-  .revealed-image {
-    margin-top: 1rem;
-  }
-
-  .text-success {
-    color: #43a047;
-  }
-
-  .text-warning {
-    color: #ff9800;
-  }
-
-  @media (max-width: 768px) {
-    .preview-container.ml-md-4 {
-      margin-left: 0;
-    }
-
-    .d-flex.flex-column.flex-md-row {
-      flex-direction: column !important;
-    }
   }
 </style>
