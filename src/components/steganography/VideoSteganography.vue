@@ -59,10 +59,7 @@
                 </div>
                 <input type="file" ref="secretMessageFileInput" accept=".txt" style="display: none" @change="importSecretMessageFile" />
               </div>
-              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
-                <strong>Poznámka:</strong>
-                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
-              </v-alert>
+
               <v-textarea
                 v-model="secretMessage"
                 rows="3"
@@ -73,6 +70,11 @@
                 :disabled="!videoFile || isProcessing"
                 counter
               ></v-textarea>
+
+              <v-alert v-if="hasNonLatinChars(secretMessage)" type="warning" variant="tonal" density="comfortable" class="mt-2">
+                <strong>Poznámka:</strong>
+                Váš text obsahuje české znaky (ěščřžýáíéúů). Aplikace aktuálně český text nepodporuje.
+              </v-alert>
             </div>
 
             <v-alert type="info" variant="tonal" class="mb-4" icon="mdi-information-outline">
@@ -209,24 +211,42 @@
               Odkrýt zprávu
             </v-btn>
 
-            <div v-if="revealedMessage" class="mt-6">
-              <h4 class="mb-2">Odkrytá zpráva:</h4>
-              <v-textarea v-model="revealedMessage" label="Odkrytý text" rows="5" auto-grow outlined readonly variant="outlined" class="mb-4"></v-textarea>
-              <div class="d-flex gap-2">
-                <v-btn color="success" @click="copyRevealedMessage">
-                  <v-icon class="mr-2">mdi-content-copy</v-icon>
-                  Kopírovat do schránky
-                </v-btn>
-                <v-btn color="success" @click="downloadRevealedMessage">
-                  <v-icon class="mr-2">mdi-download</v-icon>
-                  Stáhnout jako TXT
-                </v-btn>
-              </div>
-            </div>
+            <template v-if="revealedMessage">
+              <v-card-title class="text-h5">Odkrytá data</v-card-title>
+              <v-card-text>
+                <div class="revealed-text">
+                  <v-textarea v-model="revealedMessage" label="Odkrytý text" rows="5" auto-grow outlined readonly class="mb-4" variant="outlined"></v-textarea>
+
+                  <v-btn color="success" @click="copyRevealedMessage">
+                    <v-icon class="mr-2">mdi-content-copy</v-icon>
+                    Kopírovat do schránky
+                  </v-btn>
+
+                  <v-btn color="success" class="ml-2" @click="downloadRevealedMessage">
+                    <v-icon class="mr-2">mdi-download</v-icon>
+                    Stáhnout jako TXT
+                  </v-btn>
+                </div>
+              </v-card-text>
+            </template>
           </v-card-text>
         </v-card>
       </v-window-item>
     </v-window>
+    <!-- Dialog pro název souboru při stahování -->
+    <v-dialog v-model="showFileNameDialog" max-width="500px">
+      <v-card>
+        <v-card-title>Stáhnout soubor</v-card-title>
+        <v-card-text>
+          <v-text-field v-model="downloadFileName" label="Název souboru" outlined :suffix="downloadFileType" autofocus variant="outlined"></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="showFileNameDialog = false">Zrušit</v-btn>
+          <v-btn color="primary" @click="performDownload">Stáhnout</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -461,20 +481,28 @@
   // Stažení odkryté zprávy jako textového souboru
   function downloadRevealedMessage() {
     if (!revealedMessage.value) {
-      emit('show-message', { message: 'Není k dispozici žádný text ke stažení.', type: 'error' });
+      emit('show-message', {
+        message: 'Není k dispozici žádný text ke stažení.',
+        type: 'error'
+      });
       return;
     }
 
-    const blob = new Blob([revealedMessage.value], { type: 'text/plain;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `odkryta_zprava_video.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+    prepareDownload('odkryta_zprava', '.txt', (fileName) => {
+      const blob = new Blob([revealedMessage.value], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${fileName}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
 
-    emit('show-message', { message: 'Odkrytý text byl úspěšně stažen.', type: 'success' });
+      emit('show-message', {
+        message: 'Odkrytý text byl úspěšně stažen.',
+        type: 'success'
+      });
+    });
   }
 
   // Formátování délky videa
@@ -539,15 +567,45 @@
     } else {
       // Reset sekce ukrývání
       secretMessage.value = '';
-      videoFile.value = null;
-      videoInfo.value = null;
       frameIndex.value = 0;
-      modifiedFrameUrl.value = '';
-      currentFrameIndex.value = 0;
-      stegoFrameCanvas.value = null;
     }
     emit('show-message', { message: '', type: 'info' });
   });
+
+  const downloadFileType = ref('.txt');
+  const downloadCallback = ref(null);
+
+  // Název souboru pro stahování
+  const showFileNameDialog = ref(false);
+
+  function prepareDownload(defaultName, fileType, callback) {
+    downloadFileName.value = defaultName;
+    downloadFileType.value = fileType;
+    downloadCallback.value = callback;
+    showFileNameDialog.value = true;
+  }
+
+  function performDownload() {
+    if (!downloadFileName.value) {
+      emit('show-message', {
+        message: 'Název souboru nesmí být prázdný.',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (!downloadCallback.value || typeof downloadCallback.value !== 'function') {
+      emit('show-message', {
+        message: 'Chyba při stahování: Neplatná funkce pro stažení.',
+        type: 'error'
+      });
+      return;
+    }
+    if (typeof downloadCallback.value === 'function') {
+      downloadCallback.value(downloadFileName.value);
+    }
+    showFileNameDialog.value = false;
+  }
 </script>
 
 <style scoped>

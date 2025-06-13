@@ -89,7 +89,7 @@
                   Odkrýt zprávu z tohoto audia
                 </v-btn>
 
-                <v-btn color="success" class="ml-2" @click="openDownloadDialog">
+                <v-btn color="success" class="ml-2" @click="openDownloadDialog" :disabled="true">
                   <v-icon class="mr-2">mdi-download</v-icon>
                   Stáhnout audio
                 </v-btn>
