@@ -587,7 +587,7 @@
       img.onload = async () => {
         if (!secretCanvas.value) return;
 
-        if (selectedImageStegoMethod.value.value === 'msb' && carrierImageInfo.value) {
+        if ((selectedImageStegoMethod.value.value === 'msb' || selectedImageStegoMethod.value.value === 'color-similarity') && carrierImageInfo.value) {
           if (img.width !== carrierImageInfo.value.width || img.height !== carrierImageInfo.value.height) {
             // Create a new canvas with carrier size
             const resizedCanvas = document.createElement('canvas');
